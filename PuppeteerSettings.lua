@@ -368,7 +368,7 @@ COOLDOWN_REDUCING_TALENTS = {["Improved Lay on Hands"] = {["Lay on Hands"] = 10 
 }
 
 DefaultClassTrackedCDs = {
-    ["PALADIN"] = {"Hand of Freedom", "Hand of Protection", "Divine Shield", "Hammer of Justice", "Divine Intervation", "Lay on Hands"},
+    ["PALADIN"] = {"Hand of Freedom", "Hand of Protection", "Divine Shield", "Hammer of Justice", "Divine Intervention", "Lay on Hands"},
     ["PALADINHealer"] = {"Holy Shock"},
     ["PALADINTank"] = {"Bulwark of the Righteous"},
     ["WARRIOR"] = {"Last Stand", "Shield Wall", "Death Wish", "Mocking Blow", "Challenging Shout"},
@@ -382,7 +382,7 @@ DefaultClassTrackedCDs = {
     ["WARLOCK"] = {"Create Soulstone (Major)"}
 }
 DefaultClassPartyTrackedCDs = {
-    ["PALADIN"] = {"Hand of Protection", "Divine Intervation"},
+    ["PALADIN"] = {"Hand of Protection", "Divine Intervention"},
     ["DRUID"] = {"Rebirth"},
     ["HUNTER"] = {"Tranquilizing Shot"},
     ["WARLOCK"] = {"Create Soulstone (Major)"}

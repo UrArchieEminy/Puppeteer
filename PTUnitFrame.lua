@@ -36,6 +36,7 @@ PTUnitFrame.auraButtonPool = {}
 PTUnitFrame.auraButtons = {}
 PTUnitFrame.auraIcons = {} -- array: {"frame", "icon", "stackText", "button"}
 PTUnitFrame.cooldownFrames = {}
+PTUnitFrame.currentCD = {}
 PTUnitFrame.cooldownReducingTalent = {}
 PTUnitFrame.BlessedStrikes = nil -- special interaction, here before cooldownReducingTalent gets deleted after use ofr memory reasons
 
@@ -65,8 +66,8 @@ PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
-        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {}},
-         self)
+        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {},
+        currentCD = {}}, self)
     return obj
 end
 
@@ -990,8 +991,8 @@ function PTUnitFrame:GenerateCooldownFrames()
             texture = "Interface\\Icons\\spell_holy_divineintervention",
             duration = 5 * 60,
         },
-        ["Divine Intervation"] = {
-            name = "Divine Intervation",
+        ["Divine Intervention"] = {
+            name = "Divine Intervention",
             texture = "Interface\\Icons\\spell_nature_timestop",
             duration = 60 * 60,
         },
@@ -1138,7 +1139,6 @@ function PTUnitFrame:GenerateCooldownFrames()
     else
         util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
     end
-    
 
     for index, spell in ipairs(cooldowns) do
         if trackedCooldowns[spell] then
@@ -1153,6 +1153,11 @@ function PTUnitFrame:GenerateCooldownFrames()
                 local icon = aura.icon
                 icon:Show()
                 icon:SetAllPoints(frame)
+                --print(spell)
+                --Roids.Print(self.currentCD[spell])
+                if self.currentCD[spell] then
+                    CooldownFrame_SetTimer(aura.duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
+                end
             else
                 local frame = CreateFrame("Frame", nil, self.healthBar)
                 frame.unitFrame = self
@@ -1184,8 +1189,9 @@ function PTUnitFrame:GenerateCooldownFrames()
                     cooldown = trackedCooldowns[spell].duration
                 end
 
-
-
+                if self.currentCD[spell] then
+                    CooldownFrame_SetTimer(duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
+                end
                 self.cooldownFrames[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration, ["cooldown"] =  cooldown}
             end
         end
@@ -1195,6 +1201,9 @@ function PTUnitFrame:GenerateCooldownFrames()
 end
 
 function PTUnitFrame:GetTalentAndGenerateFrames()
+    if not util.IsSuperWowPresent() then
+        return
+    end
     if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
         if self:GetName() == UnitName("player") then
@@ -1208,8 +1217,22 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
                     end
                 end
             end
+            local cooldowns = compost:GetTable()
+            if string.find(self.unit, "focus") then
+                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
+                if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
+                    util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
+                end
+            else
+                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
+            end
+            for _, spell in ipairs(cooldowns) do
+                local start, duration = GetSpellCooldown(spell)
+                self.currentCD[spell] = {["start"] = start, ["duration"] = duration}
+            end
             self:GenerateCooldownFrames()
         else
+            self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
             Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true)
         end
     else
@@ -2015,6 +2038,7 @@ function PTUnitFrame:UpdateRole()
     else
         self.roleIcon.frame:Hide()
     end
+    self:GetTalentAndGenerateFrames()
 end
 
 function PTUnitFrame:GetProfile()

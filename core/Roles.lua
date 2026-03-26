@@ -4,9 +4,11 @@ local util = PTUtil
 local colorize = util.Colorize
 local GetColoredRoleText = util.GetColoredRoleText
 local SplitString = util.SplitString
+local compost = AceLibrary("Compost-2.0")
 
 local trackedUi = nil -- this is in use to get talents for ui display it's temporary for a proof of concept
 local temp = nil
+local class = class
 
 
 AssignedRoles = nil
@@ -256,6 +258,7 @@ talentScanner:SetScript("OnEvent", function()
                 PlayerTalentData[sender] = nil
             else
                 if not trackedUi then 
+                    print("a")
                     return
                 end
                 trackedUi:GenerateCooldownFrames()
@@ -263,6 +266,44 @@ talentScanner:SetScript("OnEvent", function()
             end
             if util.IsTableEmpty(PlayerTalentData) then
                 scanTimeoutAt = 0 -- Re-enable inspect comm next frame
+            end
+        end
+
+        if string.find(message, "CDShow", 1, true) and temp then
+            print("a")
+            for _, ui in ipairs(AllUnitFrames) do
+                if sender == ui:GetName() then
+                    trackedUi = ui
+                    local cooldowns = compost:GetTable()
+                    if string.find(ui.unit, "focus") then
+                        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)])
+                        if trackedUi:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)..trackedUi:GetRole()] then
+                            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)..trackedUi:GetRole()])
+                        end
+                    elseif PuppeteerSettings.DefaultClassPartyTrackedCDs[ui:GetClass()] then
+                        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(trackedUi.unit)])
+                    end
+                    for _, spell in ipairs(cooldowns) do
+                        local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
+                        
+                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
+                    end
+                    compost:Reclaim(cooldowns)
+                end
+            end
+        end
+        if string.find(message, "CDInfo;", 1, true) and temp then
+            local split = SplitString(message, ';')
+            --Roids.Print(message)
+            local unit = split[2]
+            local spell = split[3]
+            local start = tonumber(split[4])
+            local duration = tonumber(split[5])
+            for ui in UnitFrames(unit) do
+                ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
+                --Roids.Print(spell)
+                --Roids.Print(ui.currentCD[spell])
+                --ui:GenerateCooldownFrames()
             end
         end
     end
@@ -275,6 +316,8 @@ local function requestTalents(name)
             return
         end
     end
+    
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
@@ -284,6 +327,7 @@ function startTalentScan(name, class, temporary)
     scanTimeoutAt = GetTime() + SCAN_TIMEOUT
     disableTalentMessageProcessing()
     temp = temporary
+    class = class
     requestTalents(name)
 end
 
