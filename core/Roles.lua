@@ -192,10 +192,11 @@ talentScanner:SetScript("OnEvent", function()
         local message = arg2
 		local sender = arg4
 
-        if not PlayerTalentData[sender] then
-            return
-        end
+        
 
+        --if not PlayerTalentData[sender] then
+        --    return
+        --end
 
         if string.find(message, "INSTalentTabInfo;", 1, true) then
             -- This is sent right before receiving info for individual talents in the tree
@@ -269,30 +270,27 @@ talentScanner:SetScript("OnEvent", function()
             end
         end
 
-        if string.find(message, "CDShow", 1, true) and temp then
+        if string.find(message, "CDShow", 1, true) and temp then -- person who is asked to get cooldowns from
             Roids.Print("sending info from me to "..sender)
             for _, ui in ipairs(AllUnitFrames) do
-                if sender == ui:GetName() then
-                    trackedUi = ui
+                if UnitName("player") == ui:GetName() then
                     local cooldowns = compost:GetTable()
-                    if string.find(ui.unit, "focus") then
-                        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)])
-                        if trackedUi:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)..trackedUi:GetRole()] then
-                            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(trackedUi.unit)..trackedUi:GetRole()])
-                        end
-                    elseif PuppeteerSettings.DefaultClassPartyTrackedCDs[ui:GetClass()] then
-                        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(trackedUi.unit)])
+
+                    util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
+                    if ui:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()] then
+                        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()])
                     end
+
                     for _, spell in ipairs(cooldowns) do
                         local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
-                        
-                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
+                        local _, guid = UnitExists("player")
+                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..start..";"..duration, "GUILD")
                     end
                     compost:Reclaim(cooldowns)
                 end
             end
         end
-        if string.find(message, "CDInfo;", 1, true) and temp then
+        if string.find(message, "CDInfo;", 1, true) and temp then -- person who sent the request to know the cooldowns
             Roids.Print("retriving info from "..sender.." to "..UnitName("player"))
             local split = SplitString(message, ';')
             local unit = split[2]
@@ -301,25 +299,24 @@ talentScanner:SetScript("OnEvent", function()
             local duration = tonumber(split[5])
             for ui in UnitFrames(unit) do
                 ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
-                ui:GenerateCooldownFrames()
             end
         end
     end
 end)
 
 local function requestTalents(name)
-    --if name == UnitName("player") then
-    --    if talentMessageHandler then
-    --            talentMessageHandler("INSTalentShow", UnitName("player"))
-    --        return
-    --    end
-    --end
-    --
+    if name == UnitName("player") then
+        if talentMessageHandler then
+                talentMessageHandler("INSTalentShow", UnitName("player"))
+            return
+        end
+    end
+    
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
-    --SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
-function startTalentScan(name, class, temporary)
+function startTalentScan(name, class, temporary, ui)
     PlayerTalentData[name] = {class = class, trees = {}}
     talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
     scanTimeoutAt = GetTime() + SCAN_TIMEOUT

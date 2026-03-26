@@ -1206,36 +1206,36 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
     end
     if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
-        --if self:GetName() == UnitName("player") then
-        --    for tab = 1, GetNumTalentTabs() do
-        --        for talent = 1, GetNumTalents(tab) do
-        --            nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
-        --            if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
-        --                for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
-        --                    self.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * rank
-        --                end
-        --            end
-        --        end
-        --    end
-        --    local cooldowns = compost:GetTable()
-        --    if string.find(self.unit, "focus") then
-        --        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
-        --        if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
-        --            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
-        --        end
-        --    else
-        --        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
-        --    end
-        --    for _, spell in ipairs(cooldowns) do
-        --        local start, duration = GetSpellCooldown(spell)
-        --        self.currentCD[spell] = {["start"] = start, ["duration"] = duration}
-        --    end
-        --    compost:Reclaim(cooldowns)
-        --    self:GenerateCooldownFrames()
-        --else
+        if self:GetName() == UnitName("player") then
+            for tab = 1, GetNumTalentTabs() do
+                for talent = 1, GetNumTalents(tab) do
+                    nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
+                    if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
+                        for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
+                            self.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * rank
+                        end
+                    end
+                end
+            end
+            local cooldowns = compost:GetTable()
+            if string.find(self.unit, "focus") then
+                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
+                if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
+                    util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
+                end
+            else
+                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
+            end
+            for _, spell in ipairs(cooldowns) do
+                local start, duration = GetSpellCooldown(spell)
+                self.currentCD[spell] = {["start"] = start, ["duration"] = duration}
+            end
+            compost:Reclaim(cooldowns)
+            self:GenerateCooldownFrames()
+        else
             self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
-            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true)
-        --end
+            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self)
+        end
     else
         if self.cooldownFrames then
             for _, aura in pairs(self.cooldownFrames) do
