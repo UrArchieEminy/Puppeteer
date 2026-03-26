@@ -1230,6 +1230,7 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
                 local start, duration = GetSpellCooldown(spell)
                 self.currentCD[spell] = {["start"] = start, ["duration"] = duration}
             end
+            compost:Reclaim(cooldowns)
             self:GenerateCooldownFrames()
         else
             self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
