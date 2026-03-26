@@ -286,7 +286,7 @@ talentScanner:SetScript("OnEvent", function()
                     for _, spell in ipairs(cooldowns) do
                         local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
                         
-                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..UnitName("player")..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
+                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
                     end
                     compost:Reclaim(cooldowns)
                 end
