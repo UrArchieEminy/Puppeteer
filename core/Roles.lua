@@ -270,7 +270,7 @@ talentScanner:SetScript("OnEvent", function()
         end
 
         if string.find(message, "CDShow", 1, true) and temp then
-            print("a")
+            Roids.Print("sending info from me to "..sender)
             for _, ui in ipairs(AllUnitFrames) do
                 if sender == ui:GetName() then
                     trackedUi = ui
@@ -286,39 +286,37 @@ talentScanner:SetScript("OnEvent", function()
                     for _, spell in ipairs(cooldowns) do
                         local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
                         
-                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
+                        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..UnitName("player")..">", "CDInfo;"..ui.unit..";"..spell..";"..start..";"..duration, "GUILD")
                     end
                     compost:Reclaim(cooldowns)
                 end
             end
         end
         if string.find(message, "CDInfo;", 1, true) and temp then
+            Roids.Print("retriving info from "..sender.." to "..UnitName("player"))
             local split = SplitString(message, ';')
-            --Roids.Print(message)
             local unit = split[2]
             local spell = split[3]
             local start = tonumber(split[4])
             local duration = tonumber(split[5])
             for ui in UnitFrames(unit) do
                 ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
-                --Roids.Print(spell)
-                --Roids.Print(ui.currentCD[spell])
-                --ui:GenerateCooldownFrames()
+                ui:GenerateCooldownFrames()
             end
         end
     end
 end)
 
 local function requestTalents(name)
-    if name == UnitName("player") then
-        if talentMessageHandler then
-                talentMessageHandler("INSTalentShow", UnitName("player"))
-            return
-        end
-    end
-    
+    --if name == UnitName("player") then
+    --    if talentMessageHandler then
+    --            talentMessageHandler("INSTalentShow", UnitName("player"))
+    --        return
+    --    end
+    --end
+    --
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
+    --SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
 function startTalentScan(name, class, temporary)
