@@ -1498,14 +1498,9 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
     local frame = component.frame
     frame:SetWidth(size)
     frame:SetHeight(size)
-    if type == "Buff" then
-        frame:SetPoint("TOPLEFT", xOffset, yOffset)
-    elseif type == "Debuff" then
-        frame:SetPoint("TOPRIGHT", xOffset, yOffset)
-    else
-        frame:SetPoint("TOPLEFT", self.healthBar,"TOPLEFT", xOffset, yOffset)
-    end
+    frame:SetPoint(type == "Buff" and "TOPLEFT" or "TOPRIGHT", xOffset, yOffset)
     frame:Show()
+
     frame.unitFrame = self
     frame.aura = component
     frame.auraData = aura
@@ -1542,7 +1537,7 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
         else
             component.border:Hide()
         end
-    elseif type == "Debuff" then
+    else
         local border = component.border
         border:Show()
         local color = debuffTypeBorderColors[aura.type] or debuffTypeBorderColors["Other"]
@@ -1557,25 +1552,23 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
         local startTime = aura.time.startTime
         local endTime = aura.time.endTime
         local duration = aura.time.duration
-            local durationUI = component.duration
-
+        local durationUI = component.duration
+        CooldownFrame_SetTimer(durationUI, startTime, duration, 1)
+        if duration < 60 then
             CooldownFrame_SetTimer(durationUI, startTime, duration, 1)
-
-            if duration < 60 then
-                CooldownFrame_SetTimer(durationUI, startTime, duration, 1)
-                durationUI.displayAt = PTOptions.ShowAuraTimesAt.Long
-                -- To prevent having a frame where the duration is not updated
-                component.durationText:SetSeconds(nil)
-                util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
-            end
+            durationUI.displayAt = PTOptions.ShowAuraTimesAt.Long
+            -- To prevent having a frame where the duration is not updated
+            component.durationText:SetSeconds(nil)
+            util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
         else
             if endTime - GetTime() > -4 then -- Don't display duration if the predicted time has lapsed
                 local durationUI = component.duration
-
                 if duration < 60 then
                     durationUI.displayAt = PTOptions.ShowAuraTimesAt.Short
                 elseif duration <= 60 * 2 then
-                util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
+                    util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
+                end
+            end
         end
     end
 end

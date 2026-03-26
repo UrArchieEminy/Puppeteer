@@ -75,6 +75,9 @@ RegisterEventHandler("UNIT_AURA", function()
     end
 end)
 RegisterEventHandler({"PARTY_MEMBERS_CHANGED", "RAID_ROSTER_UPDATE"}, function()
+    for _, ui in ipairs(AllUnitFrames) do
+        ui:GetTalentAndGenerateFrames()
+    end
     CheckGroupThrottled()
 end)
 RegisterEventHandler({"UNIT_PET", "PLAYER_PET_CHANGED"}, function()
