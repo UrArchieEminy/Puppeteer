@@ -16,6 +16,7 @@ PTUnitFrame.guidUnit = nil -- Used for custom units
 PTUnitFrame.rootContainer = nil -- Contains the main container and the overlay
 PTUnitFrame.overlayContainer = nil -- Contains elements that should not be affected by opacity
 PTUnitFrame.container = nil -- Most elements are contained in this
+PTUnitFrame.targetName = nil
 PTUnitFrame.nameText = nil
 PTUnitFrame.healthBar = nil
 PTUnitFrame.incomingHealthBar = nil
@@ -34,6 +35,10 @@ PTUnitFrame.auraIconPool = {} -- array: {"frame", "icon", "stackText"}
 PTUnitFrame.auraButtonPool = {}
 PTUnitFrame.auraButtons = {}
 PTUnitFrame.auraIcons = {} -- array: {"frame", "icon", "stackText", "button"}
+PTUnitFrame.cooldownFrames = {}
+PTUnitFrame.cooldownReducingTalent = {}
+PTUnitFrame.BlessedStrikes = nil -- special interaction, here before cooldownReducingTalent gets deleted after use ofr memory reasons
+
 
 PTUnitFrame.targetOutline = nil
 
@@ -60,7 +65,8 @@ PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
-        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats()}, self)
+        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {}},
+         self)
     return obj
 end
 
@@ -181,6 +187,7 @@ function PTUnitFrame:UpdateAll()
     self:UpdateOutline()
     self:UpdateRaidMark()
     self:UpdatePVP()
+    self:UpdateTarget()
 end
 
 function PTUnitFrame:GetShowDistanceThreshold()
@@ -443,6 +450,19 @@ function PTUnitFrame:ColorizeText(inputText, color)
         return colorize(inputText, color)
     end
     return inputText
+end
+
+function PTUnitFrame:UpdateTarget() 
+    if string.find(self.unit, "enemy") then
+        local exists, tGuid = UnitExists(self.unit)
+        if exists and UnitExists(tGuid .. "target") then
+            local tname = GetUnitName(tGuid .. "target")
+            local r, g, b = util.GetClassColor(util.GetClass(tGuid .. "target"))
+            self.targetName:SetText(colorize(tname, r, g, b))
+        else
+            self.targetName:SetText("")
+        end
+    end
 end
 
 function PTUnitFrame:UpdateHealth()
@@ -766,6 +786,16 @@ function PTUnitFrame:UpdatePower()
     self.powerText:SetText(text)
 end
 
+
+function PTUnitFrame:HandleCooldown(caster, spell)
+    if self.cooldownFrames[spell] then
+        CooldownFrame_SetTimer(self.cooldownFrames[spell].duration, GetTime(), self.cooldownFrames[spell].cooldown, 1)
+    elseif string.find(self.unit, "focus") and spell == "Crusader Strike" and self.BlessedStrikes == true then
+        print(spell)
+        CooldownFrame_SetTimer(self.cooldownFrames["Holy Shock"].duration, GetTime(), 0, 0)
+    end
+end
+
 AuraTooltip = CreateFrame("GameTooltip", "PTAuraTooltip", UIParent, "GameTooltipTemplate")
 
 local AURA_DURATION_TEXT_FLASH_THRESHOLD = 5
@@ -804,66 +834,10 @@ function PTUnitFrame:AllocateAura()
 
     -- Duration display, only used when SuperWoW is present
     if util.IsSuperWowPresent() then
-        local duration = CreateFrame("Model", nil, frame, "CooldownFrameTemplate")
+        local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
         duration.noCooldownCount = true
-        duration:SetAlpha(0.8)
-        local durationOverlayFrame = CreateFrame("Frame", nil, frame)
-        durationOverlayFrame:SetFrameLevel(durationOverlayFrame:GetFrameLevel() + 1)
-        local durationText = durationOverlayFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
-        durationText:SetPoint("BOTTOMLEFT", durationOverlayFrame, "BOTTOMLEFT", 0, 0)
-        durationText.SetSeconds = function(self, seconds)
-            self.seconds = seconds
-            if seconds == nil then
-                self:SetText("")
-                return
-            end
-            self:SetText(seconds <= 60 and seconds or math.ceil(seconds / 60).."m")
-            self:SetFont("Fonts\\FRIZQT__.TTF", math.ceil(frame:GetHeight() * 
-                (seconds < 540 and (seconds < 10 and 0.6 or 0.45) or 0.35)), "OUTLINE")
-        end
-        duration.UpdateText = function()
-            local seconds = duration.seconds
-            local secondsPrecise = duration.secondsPrecise
-            durationText:SetSeconds(seconds)
-            if seconds <= AURA_DURATION_TEXT_FLASH_THRESHOLD then
-                durationText:SetTextColor(
-                    util.InterpolateColorsNoTable(durationTextFlashColorsRange[seconds], 
-                    secondsPrecise - seconds))
-            elseif seconds <= AURA_DURATION_TEXT_LOW_THRESHOLD then
-                durationText:SetTextColor(1, 1, 0.25)
-            else
-                durationText:SetTextColor(1, 1, 1)
-            end
-            duration:SetScript("OnUpdate", nil)
-        end
-        local SetSequenceTime = duration.SetSequenceTime
-        local GetTime = GetTime
-        duration:SetScript("OnUpdateModel", function()
-            if duration.stopping == 0 then
-                duration:SetAlpha(0.8)
-                local time = GetTime()
-                local progress = (time - duration.start) / duration.duration
-                if progress < 1.0 then
-                    SetSequenceTime(duration, 0, 1000 - (progress * 1000))
-                    local secondsPrecise = duration.start - time + duration.duration
-                    local seconds = math.floor(secondsPrecise)
-                    if seconds <= (duration.displayAt or AURA_DURATION_TEXT_FLASH_THRESHOLD) then
-                        if durationText.seconds ~= seconds or seconds <= AURA_DURATION_TEXT_FLASH_THRESHOLD then
-                            -- You don't want to know why it's gotta be done like this..
-                            -- (If you're insane and you do, it's because otherwise the text will disappear for one frame otherwise)
-                            duration.seconds = seconds
-                            duration.secondsPrecise = secondsPrecise
-                            duration:SetScript("OnUpdate", duration.UpdateText)
-                        end
-                    elseif durationText.seconds ~= nil then
-                        durationText:SetSeconds(nil)
-                    end
-                    return
-                end
-                durationText:SetSeconds(nil)
-                SetSequenceTime(duration, 0, 0)
-            end
-        end)
+        durationOverlayFrame = PTUnitFrame:SuperWoWFrameTimer(frame).durationOverlayFrame
+        durationText = PTUnitFrame:SuperWoWFrameTimer(frame).durationText
         return {["frame"] = frame, ["icon"] = icon, ["border"] = border, ["stackText"] = stackText, ["overlay"] = durationOverlayFrame, 
             ["durationText"] = durationText, ["duration"] = duration}
     end
@@ -988,6 +962,334 @@ function PTUnitFrame:ReleaseAuras()
     self.auraIcons = compost:Erase(self.auraIcons)
 end
 
+function PTUnitFrame:GenerateCooldownFrames()
+    for _, aura in pairs(self.cooldownFrames) do
+        local frame = aura.frame
+        frame:Hide()
+        frame:ClearAllPoints()
+        
+        local icon = aura.icon
+        icon:Hide()
+        icon:ClearAllPoints()
+    end
+
+    local trackedCooldowns = {
+        -- PALADIN GENERAL
+        ["Hand of Freedom"] = {
+            name = "Hand of Freedom",
+            texture = "Interface\\Icons\\spell_holy_sealofvalor",
+            duration = 24,
+        },
+        ["Hand of Protection"] = {
+            name = "Hand of Protection",
+            texture = "Interface\\Icons\\spell_holy_sealofprotection",
+            duration = 5 * 60,
+        },
+        ["Divine Shield"] = {
+            name = "Divine Shield",
+            texture = "Interface\\Icons\\spell_holy_divineintervention",
+            duration = 5 * 60,
+        },
+        ["Divine Intervation"] = {
+            name = "Divine Intervation",
+            texture = "Interface\\Icons\\spell_nature_timestop",
+            duration = 60 * 60,
+        },
+        ["Lay on Hands"] = {
+            name = "Lay on Hands",
+            texture = "Interface\\Icons\\spell_holy_layonhands",
+            duration = 60 * 60,
+        },
+        ["Hammer of Justice"] = {
+            name = "Hammer of Justice",
+            texture = "Interface\\Icons\\spell_holy_sealofmight",
+            duration = 60,
+        },
+        -- TANK
+        ["Bulwark of the Righteous"] = {
+            name = "Bulwark of the Righteous",
+            texture = "Interface\\Icons\\ability_warrior_victoryrush",
+            duration = 5 * 60,
+        },
+        -- HEALER
+        ["Holy Shock"] = {
+            name = "Holy Shock",
+            texture = "Interface\\Icons\\spell_holy_searinglight",
+            duration = 15,
+        },
+        -- WARRIOR
+        ["Last Stand"] = {
+            name = "Last Stand",
+            texture = "Interface\\Icons\\spell_holy_ashestoashes",
+            duration = 10 * 60,
+        },
+        ["Shield Wall"] = {
+            name = "Shield Wall",
+            texture = "Interface\\Icons\\ability_warrior_shieldwall",
+            duration = 30 * 60,
+        },
+        ["Death Wish"] = {
+            name = "Death Wish",
+            texture = "Interface\\Icons\\spell_shadow_deathpact",
+            duration = 3 * 60,
+        },
+        ["Challenging Shout"] = {
+            name = "Challenging Shout",
+            texture = "Interface\\Icons\\ability_bullrush",
+            duration = 2 * 60,
+        },
+        ["Mocking Blow"] = {
+            name = "Mocking Blow",
+            texture = "Interface\\Icons\\ability_warrior_punishingblow",
+            duration = 2 * 60,
+        },
+        -- TANK
+        ["Taunt"] = {
+            name = "Taunt",
+            texture = "Interface\\Icons\\spell_nature_reincarnation",
+            duration = 10,
+        },
+        -- PRIEST GENERAL
+        ["Power Word: Shield"] = {
+            name = "Power Word: Shield",
+            texture = "Interface\\Icons\\spell_holy_powerwordshield",
+            duration = 4,
+        },
+        ["Fear Ward"] = {
+            name = "Fear Ward",
+            texture = "Interface\\Icons\\spell_holy_excorcism",
+            duration = 4,
+        },
+        -- PRIEST HEALER
+        ["Ascendance"] = {
+            name = "Ascendance",
+            texture = "Interface\\Icons\\spell_holy_purify",
+            duration = 5 * 60,
+        },
+        --DRUID GENERAL
+        ["Rebirth"] = {
+            name = "Rebirth",
+            texture = "Interface\\Icons\\spell_nature_reincarnation",
+            duration = 30 * 60,
+        },
+        ["Innervate"] = {
+            name = "Innervate",
+            texture = "Interface\\Icons\\spell_nature_lightning",
+            duration = 6 * 60,
+        },
+        ["Tranquility"] = {
+            name = "Tranquility",
+            texture = "Interface\\Icons\\spell_nature_tranquility",
+            duration = 30 * 60,
+        },
+        -- DRUID HEALER
+        ["Swiftmend"] = {
+            name = "Swiftmend",
+            texture = "Interface\\Icons\\inv_relics_idolofrejuvenation",
+            duration = 15,
+        },
+        -- DRUID TANK
+        ["BarkSkin(Feral)"] = {
+            name = "BarkSkin(Feral)",
+            texture = "Interface\\Icons\\spell_nature_stoneclawtotem",
+            duration = 60 * 10,
+        },
+        ["Challenging Roar"] = {
+            name = "Challenging Roar",
+            texture = "Interface\\Icons\\ability_druid_challangingroar",
+            duration = 10 * 60,
+        },
+        ["Frenzied Regeneration"] = {
+            name = "Frenzied Regeneration",
+            texture = "Interface\\Icons\\ability_bullrush",
+            duration = 5 * 60,
+        },
+        ["Enrage"] = {
+            name = "Enrage",
+            texture = "Interface\\Icons\\ability_druid_enrage",
+            duration = 60,
+        },
+        ["Feral Charge"] = {
+            name = "Feral Charge",
+            texture = "Interface\\Icons\\ability_hunter_pet_bear",
+            duration = 15,
+        },
+        -- HUNTER
+        ["Tranquilizing Shot"] = {
+            name = "Tranquilizing Shot",
+            texture = "Interface\\Icons\\spell_nature_drowsy",
+            duration = 20,
+        },
+        -- WARLOCK
+        ["Create Soulstone (Major)"] = {
+            name = "Create Soulstone (Major)",
+            texture = "Interface\\Icons\\spell_shadow_soulgem",
+            duration = 30 * 60
+        }
+    }
+
+    local cooldownProps = self:GetProfile().CooldownTracker
+    local cooldowns = compost:GetTable()
+    if string.find(self.unit, "focus") then
+        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
+        if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
+            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
+        end
+    else
+        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
+    end
+    
+
+    for index, spell in ipairs(cooldowns) do
+        if trackedCooldowns[spell] then
+            if self.cooldownFrames[spell] then
+                local aura = self.cooldownFrames[spell]
+                local frame = aura.frame
+                frame:Show()
+                frame:SetWidth(cooldownProps.Width)
+                frame:SetHeight(cooldownProps.Height)
+                frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, (index - 1) * cooldownProps.OffsetX, cooldownProps.OffsetY)
+
+                local icon = aura.icon
+                icon:Show()
+                icon:SetAllPoints(frame)
+            else
+                local frame = CreateFrame("Frame", nil, self.healthBar)
+                frame.unitFrame = self
+
+                frame:SetWidth(cooldownProps.Width)
+                frame:SetHeight(cooldownProps.Height)
+                frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, (index - 1) * cooldownProps.OffsetX, cooldownProps.OffsetY)
+                frame:Show()
+
+
+                local icon = frame:CreateTexture(nil, "ARTWORK")
+                icon:SetAllPoints(frame)
+                icon:SetTexture(trackedCooldowns[spell].texture)
+
+                local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
+                local cooldown
+
+                --Roids.Print(self.cooldownReducingTalent)
+                --[[for i in pairs(self.cooldownReducingTalent) do
+                    Roids.Print(i)
+                end]]
+                
+                if self.cooldownReducingTalent[spell] then
+                    cooldown = trackedCooldowns[spell].duration - self.cooldownReducingTalent[spell]
+                elseif self.cooldownReducingTalent["Crusader Strike"] then
+                    self.BlessedStrikes = true
+                    cooldown = trackedCooldowns[spell].duration
+                else
+                    cooldown = trackedCooldowns[spell].duration
+                end
+
+
+
+                self.cooldownFrames[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration, ["cooldown"] =  cooldown}
+            end
+        end
+    end
+    compost.Reclaim(cooldowns)
+    compost.Erase(self.cooldownReducingTalent)
+end
+
+function PTUnitFrame:GetTalentAndGenerateFrames()
+    if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
+        and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
+        if self:GetName() == UnitName("player") then
+            for tab = 1, GetNumTalentTabs() do
+                for talent = 1, GetNumTalents(tab) do
+                    nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
+                    if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
+                        for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
+                            self.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * rank
+                        end
+                    end
+                end
+            end
+            self:GenerateCooldownFrames()
+        else
+            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true)
+        end
+    else
+        if self.cooldownFrames then
+            for _, aura in pairs(self.cooldownFrames) do
+                local frame = aura.frame
+                frame:Hide()
+                frame:ClearAllPoints()
+                local icon = aura.icon
+                icon:Hide()
+                icon:ClearAllPoints()
+            end
+        end
+    end
+end
+
+function PTUnitFrame:SuperWoWFrameTimer(frame)
+    local duration = CreateFrame("Model", nil, frame, "CooldownFrameTemplate")
+    duration:SetAlpha(0.8)
+    local durationOverlayFrame = CreateFrame("Frame", nil, frame)
+    durationOverlayFrame:SetFrameLevel(durationOverlayFrame:GetFrameLevel() + 1)
+    local durationText = durationOverlayFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+    durationText:SetPoint("BOTTOMLEFT", durationOverlayFrame, "BOTTOMLEFT", 0, 0)
+    durationText.SetSeconds = function(self, seconds)
+        self.seconds = seconds
+        if seconds == nil then
+            self:SetText("")
+            return
+        end
+        self:SetText(seconds <= 60 and seconds or math.ceil(seconds / 60).."m")
+        self:SetFont("Fonts\\FRIZQT__.TTF", math.ceil(frame:GetHeight() * 
+            (seconds < 540 and (seconds < 10 and 0.6 or 0.45) or 0.35)), "OUTLINE")
+    end
+    duration.UpdateText = function()
+        local seconds = duration.seconds
+        local secondsPrecise = duration.secondsPrecise
+        durationText:SetSeconds(seconds)
+        if seconds <= AURA_DURATION_TEXT_FLASH_THRESHOLD then
+            durationText:SetTextColor(
+                util.InterpolateColorsNoTable(durationTextFlashColorsRange[seconds], 
+                secondsPrecise - seconds))
+        elseif seconds <= AURA_DURATION_TEXT_LOW_THRESHOLD then
+            durationText:SetTextColor(1, 1, 0.25)
+        else
+            durationText:SetTextColor(1, 1, 1)
+        end
+        duration:SetScript("OnUpdate", nil)
+    end
+    local SetSequenceTime = duration.SetSequenceTime
+    local GetTime = GetTime
+    duration:SetScript("OnUpdateModel", function()
+        if duration.stopping == 0 then
+            duration:SetAlpha(0.8)
+            local time = GetTime()
+            local progress = (time - duration.start) / duration.duration
+            if progress < 1.0 then
+                SetSequenceTime(duration, 0, 1000 - (progress * 1000))
+                local secondsPrecise = duration.start - time + duration.duration
+                local seconds = math.floor(secondsPrecise)
+                if seconds <= (duration.displayAt or AURA_DURATION_TEXT_FLASH_THRESHOLD) then
+                    if durationText.seconds ~= seconds or seconds <= AURA_DURATION_TEXT_FLASH_THRESHOLD then
+                        -- You don't want to know why it's gotta be done like this..
+                        -- (If you're insane and you do, it's because otherwise the text will disappear for one frame otherwise)
+                        duration.seconds = seconds
+                        duration.secondsPrecise = secondsPrecise
+                        duration:SetScript("OnUpdate", duration.UpdateText)
+                    end
+                elseif durationText.seconds ~= nil then
+                    durationText:SetSeconds(nil)
+                end
+                return
+            end
+            durationText:SetSeconds(nil)
+            SetSequenceTime(duration, 0, 0)
+            CooldownFrame_SetTimer(duration, 0, 0, 0)
+        end
+    end)
+    return {["duration"] = duration, ["durationOverlayFrame"] = durationOverlayFrame, ["durationText"] = durationText}
+end
+
 do
     local trackedBuffs = PuppeteerSettings.TrackedBuffs
     function PTUnitFrame.BuffSorter(a, b)
@@ -1047,6 +1349,7 @@ function PTUnitFrame:UpdateAuras()
     
     local trackedBuffs = PuppeteerSettings.TrackedBuffs
 
+
     local buffs = compost:GetTable() -- Buffs that are tracked because of matching name
     for name, array in pairs(cache.BuffsMap) do
         if trackedBuffs[name] or enemy then
@@ -1105,6 +1408,7 @@ function PTUnitFrame:UpdateAuras()
         self:CreateAura(aura, buff, xOffset, -yOffset, "Buff", auraSize)
         xOffset = xOffset + auraSize + spacing
     end
+
     xOffset = 0
     for _, debuff in ipairs(debuffs) do
         local aura = self:GetUnusedAura()
@@ -1194,14 +1498,19 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
     local frame = component.frame
     frame:SetWidth(size)
     frame:SetHeight(size)
-    frame:SetPoint(type == "Buff" and "TOPLEFT" or "TOPRIGHT", xOffset, yOffset)
+    if type == "Buff" then
+        frame:SetPoint("TOPLEFT", xOffset, yOffset)
+    elseif type == "Debuff" then
+        frame:SetPoint("TOPRIGHT", xOffset, yOffset)
+    else
+        frame:SetPoint("TOPLEFT", self.healthBar,"TOPLEFT", xOffset, yOffset)
+    end
     frame:Show()
     frame.unitFrame = self
     frame.aura = component
     frame.auraData = aura
     frame.auraIndex = aura.index
     frame.auraType = type
-
     local icon = component.icon
     icon:SetAllPoints(frame)
     icon:SetTexture(aura.texture)
@@ -1233,7 +1542,7 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
         else
             component.border:Hide()
         end
-    else
+    elseif type == "Debuff" then
         local border = component.border
         border:Show()
         local color = debuffTypeBorderColors[aura.type] or debuffTypeBorderColors["Other"]
@@ -1248,22 +1557,25 @@ function PTUnitFrame:CreateAura(component, aura, xOffset, yOffset, type, size)
         local startTime = aura.time.startTime
         local endTime = aura.time.endTime
         local duration = aura.time.duration
-        if endTime - GetTime() > -4 then -- Don't display duration if the predicted time has lapsed
             local durationUI = component.duration
 
             CooldownFrame_SetTimer(durationUI, startTime, duration, 1)
 
             if duration < 60 then
-                durationUI.displayAt = PTOptions.ShowAuraTimesAt.Short
-            elseif duration <= 60 * 2 then
-                durationUI.displayAt = PTOptions.ShowAuraTimesAt.Medium
-            else
+                CooldownFrame_SetTimer(durationUI, startTime, duration, 1)
                 durationUI.displayAt = PTOptions.ShowAuraTimesAt.Long
+                -- To prevent having a frame where the duration is not updated
+                component.durationText:SetSeconds(nil)
+                util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
             end
+        else
+            if endTime - GetTime() > -4 then -- Don't display duration if the predicted time has lapsed
+                local durationUI = component.duration
 
-            -- To prevent having a frame where the duration is not updated
-            component.durationText:SetSeconds(nil)
-            util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
+                if duration < 60 then
+                    durationUI.displayAt = PTOptions.ShowAuraTimesAt.Short
+                elseif duration <= 60 * 2 then
+                util.CallWithThis(durationUI, durationUI:GetScript("OnUpdateModel"))
         end
     end
 end
@@ -1356,6 +1668,7 @@ function PTUnitFrame:Initialize()
     local name = healthBar:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     self.nameText = name
     name:SetAlpha(profile.NameText:GetAlpha())
+
 
     local bg = container:CreateTexture(nil, "BACKGROUND")
     healthBar.background = bg

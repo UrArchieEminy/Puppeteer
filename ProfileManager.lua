@@ -103,6 +103,19 @@ function InitializeDefaultProfiles()
             ["OffsetY"] = 0,
             ["AlignmentV"] = "BOTTOM",
         },
+        ["CooldownTracker"] = {
+            ["PaddingH"] = 0,
+            ["Opacity"] = 100,
+            ["OffsetX"] = -16,
+            ["Anchor"] = "Health Bar",
+            ["PaddingV"] = 0,
+            ["AlignmentH"] = "RIGHT",
+            ["Width"] = 16,
+            ["ObjectType"] = "Sized",
+            ["Height"] = 16,
+            ["OffsetY"] = 0,
+            ["AlignmentV"] = "TOP",
+        },
         ["AlwaysShowMissingHealth"] = false,
         ["PowerText"] = {
             ["FontSize"] = 8,
@@ -166,6 +179,20 @@ function InitializeDefaultProfiles()
             ["ObjectType"] = "Text",
             ["OffsetY"] = 0,
             ["AlignmentV"] = "TOP",
+        },
+        ["TargetName"] = {
+            ["FontSize"] = 8,
+            ["PaddingH"] = 4,
+            ["Color"] = "Class",
+            ["Opacity"] = 100,
+            ["OffsetX"] = 0,
+            ["Anchor"] = "Health Bar",
+            ["PaddingV"] = 0,
+            ["AlignmentH"] = "CENTER",
+            ["MaxWidth"] = 80,
+            ["ObjectType"] = "Text",
+            ["OffsetY"] = 5,
+            ["AlignmentV"] = "BOTTOM",
         },
         ["HealthBarColor"] = "Green To Red", -- "Class", "Green", "Green To Red"
         ["Width"] = 100,
@@ -337,6 +364,11 @@ function InitializeDefaultProfiles()
                 ["AlignmentV"] = "TOP",
             },
         },
+        ["CooldownTracker"] = {
+            ["Height"] = 14,
+            ["Width"] = 14,
+            ["OffsetX"] = -14,
+        },
         ["PaddingTop"] = 12,
         ["HealthBarHeight"] = 24,
     })
@@ -497,6 +529,13 @@ function InitializeDefaultProfiles()
         ["RangeText"] = {
             ["OffsetY"] = 0,
             ["AlignmentV"] = "TOP",
+        },
+        ["CooldownTracker"] = {
+            ["AlignmentH"] = "LEFT",
+            ["Width"] = 20,
+            ["Height"] = 20,
+            ["OffsetY"] = 21,
+            ["OffsetX"] = 20,
         },
         ["HealthTexts"] = {
             ["Normal"] = {

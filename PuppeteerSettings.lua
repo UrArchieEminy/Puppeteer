@@ -364,6 +364,30 @@ function SetOption(location, value)
     optionTable[location] = value
 end
 
+COOLDOWN_REDUCING_TALENTS = {["Improved Lay on Hands"] = {["Lay on Hands"] = 10 * 60}, ["Guardian's Favor"] = {["Hand of Protection"] = 60}, ["Blessed Strikes"] = {["Crusader Strike"] = 0}, --Always assuming rank 5 BS so insta holyShock
+}
+
+DefaultClassTrackedCDs = {
+    ["PALADIN"] = {"Hand of Freedom", "Hand of Protection", "Divine Shield", "Hammer of Justice", "Divine Intervation", "Lay on Hands"},
+    ["PALADINHealer"] = {"Holy Shock"},
+    ["PALADINTank"] = {"Bulwark of the Righteous"},
+    ["WARRIOR"] = {"Last Stand", "Shield Wall", "Death Wish", "Mocking Blow", "Challenging Shout"},
+    ["WARRIORTank"] = {"Taunt"},
+    ["PRIEST"] = {"Power Word: Shield", "Fear Ward"},
+    ["PRIESTHealer"] = {"Ascendance"},
+    ["DRUID"] = {"Rebirth", "Innervate", "Tranquility"},
+    ["DRUIDHealer"] = {"Swiftmend"},
+    ["DRUIDTank"] = {"BarkSkin(Feral)", "Challenging Roar", "Frenzied Regeneration", "Enrage", "Feral Charge"},
+    ["HUNTER"] = {"Tranquilizing Shot"},
+    ["WARLOCK"] = {"Create Soulstone (Major)"}
+}
+DefaultClassPartyTrackedCDs = {
+    ["PALADIN"] = {"Hand of Protection", "Divine Intervation"},
+    ["DRUID"] = {"Rebirth"},
+    ["HUNTER"] = {"Tranquilizing Shot"},
+    ["WARLOCK"] = {"Create Soulstone (Major)"}
+}
+
 -- Buffs/debuffs that significantly modify healing
 DefaultTrackedHealingBuffs = {"Amplify Magic", "Dampen Magic", "Master Demonologist", "Apotheosis"}
 DefaultTrackedHealingDebuffs = {"Mortal Strike", "Wound Poison", "Curse of the Deadwood", "Veil of Shadow", "Mortal Wound", 

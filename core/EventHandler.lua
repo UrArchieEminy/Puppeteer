@@ -133,6 +133,15 @@ RegisterEventHandler("PLAYER_LOGOUT", function()
     PuppeteerSettings.SaveFramePositions()
 end)
 
+RegisterEventHandler("UNIT_CASTEVENT", function()
+    if arg3 == "CAST" then
+        name, rank, icon, ct, minr, maxr = SpellInfo(arg4)
+        for ui in UnitFrames(arg1) do
+            ui:HandleCooldown(arg1, name)
+        end
+    end
+end)
+
 local GetKeyModifier = util.GetKeyModifier
 local keyListener = CreateFrame("Frame", "PTTooltipKeyListener")
 local lastModifier = "None"

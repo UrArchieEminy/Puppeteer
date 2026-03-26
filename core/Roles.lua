@@ -5,6 +5,10 @@ local colorize = util.Colorize
 local GetColoredRoleText = util.GetColoredRoleText
 local SplitString = util.SplitString
 
+local trackedUi = nil -- this is in use to get talents for ui display it's temporary for a proof of concept
+local temp = nil
+
+
 AssignedRoles = nil
 
 LFTAutoRoleFrame = CreateFrame("Frame", "PT_LFTAutoRoleFrame")
@@ -190,6 +194,7 @@ talentScanner:SetScript("OnEvent", function()
             return
         end
 
+
         if string.find(message, "INSTalentTabInfo;", 1, true) then
             -- This is sent right before receiving info for individual talents in the tree
             local split = SplitString(message, ';')
@@ -198,37 +203,64 @@ talentScanner:SetScript("OnEvent", function()
 
             PlayerTalentData[sender].trees[index] = {points = pointsSpent, talents = {}}
         elseif string.find(message, "INSTalentInfo;", 1, true) then
-            local split = SplitString(message, ';')
+            if not temp then
+                local split = SplitString(message, ';')
 
-            local tree = tonumber(split[2])
-            local tier = tonumber(split[5])
-            local column = tonumber(split[6])
-            local currRank = tonumber(split[7])
+                local tree = tonumber(split[2])
+                local tier = tonumber(split[5])
+                local column = tonumber(split[6])
+                local currRank = tonumber(split[7])
 
-            local cache = PlayerTalentData[sender]
-            local talents = cache.trees[tree].talents
-            talents[tier.."-"..column] = currRank
+                local cache = PlayerTalentData[sender]
+                local talents = cache.trees[tree].talents
+                talents[tier.."-"..column] = currRank
+            else
+                local split = SplitString(message, ';')
+
+                local nameTalent = tonumber(split[4])
+                local currRank = tonumber(split[7])
+                
+                for _, ui in ipairs(AllUnitFrames) do
+                    if sender == ui:GetName() and (string.find(ui.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[ui:GetClass()]) and currRank > 0 then
+                        trackedUi = ui
+                        if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
+                            for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
+                                ui.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * currRank
+
+                            end
+                        end
+                    end
+                end
+            end
         elseif string.find(message, "INSTalentEND;", 1, true) then
-            local data = PlayerTalentData[sender]
-            local trees = data.trees
-            local mostPoints = 0
-            local mostIndex = 0
-            for i = 1, 3 do
-                if trees[i] and trees[i].points > mostPoints then -- TODO: Error
-                    mostPoints = trees[i].points
-                    mostIndex = i
+            if not temp then
+                local data = PlayerTalentData[sender]
+                local trees = data.trees
+                local mostPoints = 0
+                local mostIndex = 0
+                for i = 1, 3 do
+                    if trees[i] and trees[i].points > mostPoints then -- TODO: Error
+                        mostPoints = trees[i].points
+                        mostIndex = i
+                    end
                 end
-            end
-            local class = data.class
-            if mostIndex > 0 then
-                -- Check for Druid Thick Hide talent, set as tank if they have it
-                if class == "DRUID" and mostIndex == 2 and (trees[2].talents["2-3"] or 0) > 0 then
-                    SetRoleAndUpdate(sender, "Tank")
-                else
-                    SetRoleAndUpdate(sender, mostPoints > 0 and TalentCountRoleMap[class][mostIndex] or "Damage")
+                local class = data.class
+                if mostIndex > 0 then
+                    -- Check for Druid Thick Hide talent, set as tank if they have it
+                    if class == "DRUID" and mostIndex == 2 and (trees[2].talents["2-3"] or 0) > 0 then
+                        SetRoleAndUpdate(sender, "Tank")
+                    else
+                        SetRoleAndUpdate(sender, mostPoints > 0 and TalentCountRoleMap[class][mostIndex] or "Damage")
+                    end
                 end
+                PlayerTalentData[sender] = nil
+            else
+                if not trackedUi then 
+                    return
+                end
+                trackedUi:GenerateCooldownFrames()
+                trackedUi = nil
             end
-            PlayerTalentData[sender] = nil
             if util.IsTableEmpty(PlayerTalentData) then
                 scanTimeoutAt = 0 -- Re-enable inspect comm next frame
             end
@@ -239,19 +271,19 @@ end)
 local function requestTalents(name)
     if name == UnitName("player") then
         if talentMessageHandler then
-            -- Send our own talents to ourself (lol)
-            talentMessageHandler("INSTalentShow", UnitName("player"))
+                talentMessageHandler("INSTalentShow", UnitName("player"))
             return
         end
     end
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
-local function startTalentScan(name, class)
+function startTalentScan(name, class, temporary)
     PlayerTalentData[name] = {class = class, trees = {}}
     talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
     scanTimeoutAt = GetTime() + SCAN_TIMEOUT
     disableTalentMessageProcessing()
+    temp = temporary
     requestTalents(name)
 end
 

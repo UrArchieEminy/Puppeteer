@@ -396,6 +396,7 @@ function OnAddonLoaded()
         end
         for ui in UnitFrames(unit) do
             ui:UpdateOutline()
+            ui:UpdateTarget()
         end
     end)
 	PuppeteerLib:RegisterEvent("Banzai_UnitLostAggro", function(unit)
@@ -404,6 +405,7 @@ function OnAddonLoaded()
         end
         for ui in UnitFrames(unit) do
             ui:UpdateOutline()
+            ui:UpdateTarget()
         end
     end)
 
@@ -628,6 +630,9 @@ function FocusUnit(unit)
     end
 
     PTUnitProxy.SetGuidUnitType(guid, "focus")
+    for ui in UnitFrames(guid) do
+        ui:GetTalentAndGenerateFrames()
+    end
     PlaySound("GAMETARGETHOSTILEUNIT")
 end
 
@@ -763,6 +768,7 @@ function CheckGroup()
             ui:UpdateAuras()
             ui:UpdateIncomingHealing()
             ui:UpdateOutline()
+            ui:UpdateTarget()
         end
     end
     if superwow then
@@ -783,6 +789,7 @@ function CheckTarget()
                 ui:UpdateSight()
                 ui:UpdateRole()
                 ui:UpdateIncomingHealing()
+                ui:UpdateTarget()
             end
         end
     else
@@ -791,6 +798,7 @@ function CheckTarget()
             ui:UpdateAll()
             ui:UpdateRole()
             ui:UpdateIncomingHealing()
+            ui:UpdateTarget()
         end
     end
     UnitFrameGroups["Target"]:EvaluateShown()
