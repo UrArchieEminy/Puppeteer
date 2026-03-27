@@ -971,6 +971,7 @@ function PTUnitFrame:GenerateCooldownFrames()
         local icon = aura.icon
         icon:Hide()
         icon:ClearAllPoints()
+        CooldownFrame_SetTimer(aura.duration, 0, 0, 0)
     end
 
     local trackedCooldowns = {
@@ -1159,8 +1160,9 @@ function PTUnitFrame:GenerateCooldownFrames()
                 icon:Show()
                 icon:SetAllPoints(frame)
 
-                if self.currentCD[spell] then
-                    CooldownFrame_SetTimer(aura.duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
+                if self.currentCD[spell] and self.currentCD[spell] > 0 then
+                    CooldownFrame_SetTimer(aura.duration, GetTime(), self.currentCD[spell], 1)
+                    self.currentCD[spell] = 0
                 end
             else
                 local frame = CreateFrame("Frame", nil, self.healthBar)
@@ -1189,23 +1191,21 @@ function PTUnitFrame:GenerateCooldownFrames()
                 --end
 
                 if self.currentCD[spell] then
-                    CooldownFrame_SetTimer(duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
+                    CooldownFrame_SetTimer(duration, GetTime(), self.currentCD[spell], 1)
                 end
                 self.cooldownFrames[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration, ["cooldown"] =  cooldown}
             end
         end
     end
+    compost.Erase(self.currentCD)
     compost.Reclaim(cooldowns)
     compost.Erase(self.cooldownReducingTalent)
 end
 
 function PTUnitFrame:GetTalentAndGenerateFrames()
-    --if Roids then
-    --    Roids.Print(self.unit)
-    --end
-    --if not util.IsSuperWowPresent() then
-    --    return
-    --end
+    if not util.IsSuperWowPresent() then
+        return
+    end
     if self.unit and UnitIsPlayer(self.unit) and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
         if self:GetName() == UnitName("player") then
@@ -1230,12 +1230,24 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             end
             for _, spell in ipairs(cooldowns) do
                 local start, duration = GetSpellCooldown(spell)
-                self.currentCD[spell] = {["start"] = start, ["duration"] = duration}
+                if start > 0 then
+                    local remain = duration - (GetTime() - start)
+                    self.currentCD[spell] = remain
+                end
             end
             compost:Reclaim(cooldowns)
             self:GenerateCooldownFrames()
         else
-            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+            local _, guid = UnitExists(self.unit)
+            if UnitInRaid(guid) then -- only update raid frames if in raid, reducing amount of updated frames
+                if string.find(self.unit, "raid") or string.find(self.unit, "focus") then
+                    Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+                end
+            else -- unit alone or on party so ignore raid frames
+                if string.find(self.unit, "party") or string.find(self.unit, "focus") then
+                    Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+                end
+            end
             self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
         end
     else

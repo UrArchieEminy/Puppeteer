@@ -280,7 +280,10 @@ talentScanner:SetScript("OnEvent", function()
                 local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
                 local _, guid = UnitExists("player")
 
-                SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..start..";"..duration, "GUILD")
+                if start > 0 then
+                    local remain = duration - (GetTime() - start)
+                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
+                end
                 if i == table.getn(cooldowns) then
                     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
                 end
@@ -291,10 +294,9 @@ talentScanner:SetScript("OnEvent", function()
             local split = SplitString(message, ';')
             local unit = split[2]
             local spell = split[3]
-            local start = tonumber(split[4])
-            local duration = tonumber(split[5])
+            local remain = tonumber(split[4])
             for ui in UnitFrames(unit) do
-                ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
+                ui.currentCD[spell] = remain
             end
         end
         if string.find(message, "CDEnd;", 1, true) then
