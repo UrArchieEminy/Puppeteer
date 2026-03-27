@@ -791,7 +791,7 @@ end
 function PTUnitFrame:HandleCooldown(caster, spell)
     if self.cooldownFrames[spell] then
         CooldownFrame_SetTimer(self.cooldownFrames[spell].duration, GetTime(), self.cooldownFrames[spell].cooldown, 1)
-    elseif string.find(self.unit, "focus") and spell == "Crusader Strike" and self.BlessedStrikes == true then
+    elseif string.find(self.unit, "focus") and spell == "Crusader Strike" and self.BlessedStrikes == true and self.cooldownFrames["Holy Shock"] then
         CooldownFrame_SetTimer(self.cooldownFrames["Holy Shock"].duration, GetTime(), 0, 0)
     end
 end

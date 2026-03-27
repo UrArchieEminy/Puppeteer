@@ -273,11 +273,14 @@ talentScanner:SetScript("OnEvent", function()
                 util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()])
             end
 
-            for _, spell in ipairs(cooldowns) do
+            for i, spell in ipairs(cooldowns) do
                 local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
                 local _, guid = UnitExists("player")
 
                 SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..start..";"..duration, "GUILD")
+                if i == table.getn(cooldowns) then
+                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
+                end
             end
             compost:Reclaim(cooldowns)
         end
@@ -291,6 +294,14 @@ talentScanner:SetScript("OnEvent", function()
                 ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
             end
         end
+        if string.find(message, "CDEnd;", 1, true) then
+            local split = SplitString(message, ';')
+            local unit = split[2]
+
+            for ui in UnitFrames(unit) do
+                ui:GenerateCooldownFrames()
+            end
+        end
     end
 end)
 
@@ -302,8 +313,8 @@ local function requestTalents(name)
         end
     end
     
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
 end
 
 function startTalentScan(name, class, temporary, a)
