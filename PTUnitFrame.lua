@@ -834,10 +834,10 @@ function PTUnitFrame:AllocateAura()
 
     -- Duration display, only used when SuperWoW is present
     if util.IsSuperWowPresent() then
-        local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
-        duration.noCooldownCount = true
-        durationOverlayFrame = PTUnitFrame:SuperWoWFrameTimer(frame).durationOverlayFrame
-        durationText = PTUnitFrame:SuperWoWFrameTimer(frame).durationText
+        local time = PTUnitFrame:SuperWoWFrameTimer(frame)
+        local duration = time.duration
+        local durationOverlayFrame = time.durationOverlayFrame
+        local durationText = time.durationText
         return {["frame"] = frame, ["icon"] = icon, ["border"] = border, ["stackText"] = stackText, ["overlay"] = durationOverlayFrame, 
             ["durationText"] = durationText, ["duration"] = duration}
     end
@@ -1179,6 +1179,10 @@ function PTUnitFrame:GenerateCooldownFrames()
                 icon:SetTexture(trackedCooldowns[spell].texture)
 
                 local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
+
+                duration:SetModelScale(0.5)
+                duration.displayAt = 60 * 60
+
                 local cooldown
 
                 --if self.cooldownReducingTalent[spell] then
@@ -1266,8 +1270,10 @@ end
 
 function PTUnitFrame:SuperWoWFrameTimer(frame)
     local duration = CreateFrame("Model", nil, frame, "CooldownFrameTemplate")
+    duration.noCooldownCount = true
     duration:SetAlpha(0.8)
     local durationOverlayFrame = CreateFrame("Frame", nil, frame)
+    durationOverlayFrame:SetAllPoints(frame)
     durationOverlayFrame:SetFrameLevel(durationOverlayFrame:GetFrameLevel() + 1)
     local durationText = durationOverlayFrame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
     durationText:SetPoint("BOTTOMLEFT", durationOverlayFrame, "BOTTOMLEFT", 0, 0)
