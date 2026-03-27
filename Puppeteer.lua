@@ -631,7 +631,9 @@ function FocusUnit(unit)
 
     PTUnitProxy.SetGuidUnitType(guid, "focus")
     for ui in UnitFrames(guid) do
-        ui:GetTalentAndGenerateFrames()
+        if string.find(ui.unit, "focus") then
+            ui:GetTalentAndGenerateFrames()
+        end
     end
     PlaySound("GAMETARGETHOSTILEUNIT")
 end
@@ -769,6 +771,7 @@ function CheckGroup()
             ui:UpdateIncomingHealing()
             ui:UpdateOutline()
             ui:UpdateTarget()
+            ui:GetTalentAndGenerateFrames()
         end
     end
     if superwow then
@@ -790,6 +793,7 @@ function CheckTarget()
                 ui:UpdateRole()
                 ui:UpdateIncomingHealing()
                 ui:UpdateTarget()
+                ui:GetTalentAndGenerateFrames()
             end
         end
     else

@@ -1179,14 +1179,14 @@ function PTUnitFrame:GenerateCooldownFrames()
                 local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
                 local cooldown
 
-                if self.cooldownReducingTalent[spell] then
-                    cooldown = trackedCooldowns[spell].duration - self.cooldownReducingTalent[spell]
-                elseif self.cooldownReducingTalent["Crusader Strike"] then
-                    self.BlessedStrikes = true
+                --if self.cooldownReducingTalent[spell] then
+                --    cooldown = trackedCooldowns[spell].duration - self.cooldownReducingTalent[spell]
+                --elseif self.cooldownReducingTalent["Crusader Strike"] then
+                --    self.BlessedStrikes = true
+                --    cooldown = trackedCooldowns[spell].duration
+                --else
                     cooldown = trackedCooldowns[spell].duration
-                else
-                    cooldown = trackedCooldowns[spell].duration
-                end
+                --end
 
                 if self.currentCD[spell] then
                     CooldownFrame_SetTimer(duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
@@ -1200,10 +1200,13 @@ function PTUnitFrame:GenerateCooldownFrames()
 end
 
 function PTUnitFrame:GetTalentAndGenerateFrames()
-    if not util.IsSuperWowPresent() then
-        return
+    if Roids then
+        Roids.Print(self.unit)
     end
-    if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
+    --if not util.IsSuperWowPresent() then
+    --    return
+    --end
+    if self.unit and UnitIsPlayer(self.unit) and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
         if self:GetName() == UnitName("player") then
             --for tab = 1, GetNumTalentTabs() do
@@ -1233,7 +1236,7 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             self:GenerateCooldownFrames()
         else
             Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
-            --self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
+            self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
         end
     else
         if self.cooldownFrames then
@@ -2038,7 +2041,7 @@ function PTUnitFrame:UpdateRole()
     else
         self.roleIcon.frame:Hide()
     end
-    self:GetTalentAndGenerateFrames()
+    --self:GetTalentAndGenerateFrames()
 end
 
 function PTUnitFrame:GetProfile()

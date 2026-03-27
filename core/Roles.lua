@@ -115,6 +115,9 @@ function SetUnitAssignedRole(unit, role)
         return true
     end
     SetAssignedRole(UnitName(unit), role)
+    for ui in UnitFrames(unit) do
+        ui:GetTalentAndGenerateFrames()
+    end
 end
 
 function PruneAssignedRoles()
