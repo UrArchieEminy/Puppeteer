@@ -1200,9 +1200,9 @@ function PTUnitFrame:GenerateCooldownFrames()
 end
 
 function PTUnitFrame:GetTalentAndGenerateFrames()
-    if Roids then
-        Roids.Print(self.unit)
-    end
+    --if Roids then
+    --    Roids.Print(self.unit)
+    --end
     --if not util.IsSuperWowPresent() then
     --    return
     --end
