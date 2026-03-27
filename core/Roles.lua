@@ -4,9 +4,11 @@ local util = PTUtil
 local colorize = util.Colorize
 local GetColoredRoleText = util.GetColoredRoleText
 local SplitString = util.SplitString
+local compost = AceLibrary("Compost-2.0")
 
 local trackedUi = nil -- this is in use to get talents for ui display it's temporary for a proof of concept
 local temp = nil
+local class = class
 
 
 AssignedRoles = nil
@@ -190,79 +192,103 @@ talentScanner:SetScript("OnEvent", function()
         local message = arg2
 		local sender = arg4
 
-        if not PlayerTalentData[sender] then
-            return
-        end
-
-
-        if string.find(message, "INSTalentTabInfo;", 1, true) then
-            -- This is sent right before receiving info for individual talents in the tree
-            local split = SplitString(message, ';')
-            local index = tonumber(split[2])
-            local pointsSpent = tonumber(split[4])
-
-            PlayerTalentData[sender].trees[index] = {points = pointsSpent, talents = {}}
-        elseif string.find(message, "INSTalentInfo;", 1, true) then
-            if not temp then
+        if PlayerTalentData[sender] then
+            if string.find(message, "INSTalentTabInfo;", 1, true) then
+                -- This is sent right before receiving info for individual talents in the tree
                 local split = SplitString(message, ';')
+                local index = tonumber(split[2])
+                local pointsSpent = tonumber(split[4])
 
-                local tree = tonumber(split[2])
-                local tier = tonumber(split[5])
-                local column = tonumber(split[6])
-                local currRank = tonumber(split[7])
+                PlayerTalentData[sender].trees[index] = {points = pointsSpent, talents = {}}
+            elseif string.find(message, "INSTalentInfo;", 1, true) then
+                if not temp then
+                    local split = SplitString(message, ';')
 
-                local cache = PlayerTalentData[sender]
-                local talents = cache.trees[tree].talents
-                talents[tier.."-"..column] = currRank
-            else
-                local split = SplitString(message, ';')
+                    local tree = tonumber(split[2])
+                    local tier = tonumber(split[5])
+                    local column = tonumber(split[6])
+                    local currRank = tonumber(split[7])
 
-                local nameTalent = tonumber(split[4])
-                local currRank = tonumber(split[7])
-                
-                for _, ui in ipairs(AllUnitFrames) do
-                    if sender == ui:GetName() and (string.find(ui.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[ui:GetClass()]) and currRank > 0 then
-                        trackedUi = ui
-                        if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
-                            for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
-                                ui.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * currRank
+                    local cache = PlayerTalentData[sender]
+                    local talents = cache.trees[tree].talents
+                    talents[tier.."-"..column] = currRank
+                else
+                    local split = SplitString(message, ';')
 
+                    local nameTalent = split[4]
+                    local currRank = tonumber(split[7])
+
+                    for _, ui in ipairs(AllUnitFrames) do
+                        if sender == ui:GetName() and (string.find(ui.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[ui:GetClass()]) and currRank > 0 then
+                            trackedUi = ui
+                            if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
+                                for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
+                                    ui.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * currRank
+                                end
                             end
                         end
                     end
                 end
-            end
-        elseif string.find(message, "INSTalentEND;", 1, true) then
-            if not temp then
-                local data = PlayerTalentData[sender]
-                local trees = data.trees
-                local mostPoints = 0
-                local mostIndex = 0
-                for i = 1, 3 do
-                    if trees[i] and trees[i].points > mostPoints then -- TODO: Error
-                        mostPoints = trees[i].points
-                        mostIndex = i
+            elseif string.find(message, "INSTalentEND;", 1, true) then
+                if not temp then
+                    local data = PlayerTalentData[sender]
+                    local trees = data.trees
+                    local mostPoints = 0
+                    local mostIndex = 0
+                    for i = 1, 3 do
+                        if trees[i] and trees[i].points > mostPoints then -- TODO: Error
+                            mostPoints = trees[i].points
+                            mostIndex = i
+                        end
                     end
-                end
-                local class = data.class
-                if mostIndex > 0 then
-                    -- Check for Druid Thick Hide talent, set as tank if they have it
-                    if class == "DRUID" and mostIndex == 2 and (trees[2].talents["2-3"] or 0) > 0 then
-                        SetRoleAndUpdate(sender, "Tank")
-                    else
-                        SetRoleAndUpdate(sender, mostPoints > 0 and TalentCountRoleMap[class][mostIndex] or "Damage")
+                    local class = data.class
+                    if mostIndex > 0 then
+                        -- Check for Druid Thick Hide talent, set as tank if they have it
+                        if class == "DRUID" and mostIndex == 2 and (trees[2].talents["2-3"] or 0) > 0 then
+                            SetRoleAndUpdate(sender, "Tank")
+                        else
+                            SetRoleAndUpdate(sender, mostPoints > 0 and TalentCountRoleMap[class][mostIndex] or "Damage")
+                        end
                     end
+                    PlayerTalentData[sender] = nil
+                else
+                    if not trackedUi then 
+                        return
+                    end
+                    trackedUi:GenerateCooldownFrames()
+                    trackedUi = nil
                 end
-                PlayerTalentData[sender] = nil
-            else
-                if not trackedUi then 
-                    return
+                if util.IsTableEmpty(PlayerTalentData) then
+                    scanTimeoutAt = 0 -- Re-enable inspect comm next frame
                 end
-                trackedUi:GenerateCooldownFrames()
-                trackedUi = nil
             end
-            if util.IsTableEmpty(PlayerTalentData) then
-                scanTimeoutAt = 0 -- Re-enable inspect comm next frame
+        end
+
+        if string.find(message, "CDShow", 1, true) and temp then -- person who is asked to get cooldowns from
+            local ui = GetUnitFrames("player")[1]
+            local cooldowns = compost:GetTable()
+
+            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
+            if ui:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()] then
+                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()])
+            end
+
+            for _, spell in ipairs(cooldowns) do
+                local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
+                local _, guid = UnitExists("player")
+
+                SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..start..";"..duration, "GUILD")
+            end
+            compost:Reclaim(cooldowns)
+        end
+        if string.find(message, "CDInfo;", 1, true) and temp then -- person who sent the request to know the cooldowns
+            local split = SplitString(message, ';')
+            local unit = split[2]
+            local spell = split[3]
+            local start = tonumber(split[4])
+            local duration = tonumber(split[5])
+            for ui in UnitFrames(unit) do
+                ui.currentCD[spell] = {["start"] = start, ["duration"] = duration}
             end
         end
     end
@@ -275,15 +301,19 @@ local function requestTalents(name)
             return
         end
     end
+    
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
-function startTalentScan(name, class, temporary)
+function startTalentScan(name, class, temporary, a)
+    --Roids.Print(a.." "..name)
     PlayerTalentData[name] = {class = class, trees = {}}
     talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
     scanTimeoutAt = GetTime() + SCAN_TIMEOUT
     disableTalentMessageProcessing()
     temp = temporary
+    class = class
     requestTalents(name)
 end
 
