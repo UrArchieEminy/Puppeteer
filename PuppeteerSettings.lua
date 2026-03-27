@@ -379,13 +379,15 @@ DefaultClassTrackedCDs = {
     ["DRUIDHealer"] = {"Swiftmend"},
     ["DRUIDTank"] = {"BarkSkin(Feral)", "Challenging Roar", "Frenzied Regeneration", "Enrage", "Feral Charge"},
     ["HUNTER"] = {"Tranquilizing Shot"},
-    ["WARLOCK"] = {"Create Soulstone (Major)"}
+    ["WARLOCK"] = {"Create Soulstone (Major)"},
+    ["SHAMANHealer"] = {"Spirit Link"}
 }
 DefaultClassPartyTrackedCDs = {
     ["PALADIN"] = {"Hand of Protection", "Divine Intervention"},
     ["DRUID"] = {"Rebirth"},
     ["HUNTER"] = {"Tranquilizing Shot"},
-    ["WARLOCK"] = {"Create Soulstone (Major)"}
+    ["WARLOCK"] = {"Create Soulstone (Major)"},
+    ["PRIEST"] = {"Fear Ward"}
 }
 
 -- Buffs/debuffs that significantly modify healing

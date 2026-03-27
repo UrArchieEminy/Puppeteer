@@ -792,7 +792,6 @@ function PTUnitFrame:HandleCooldown(caster, spell)
     if self.cooldownFrames[spell] then
         CooldownFrame_SetTimer(self.cooldownFrames[spell].duration, GetTime(), self.cooldownFrames[spell].cooldown, 1)
     elseif string.find(self.unit, "focus") and spell == "Crusader Strike" and self.BlessedStrikes == true then
-        print(spell)
         CooldownFrame_SetTimer(self.cooldownFrames["Holy Shock"].duration, GetTime(), 0, 0)
     end
 end
@@ -1126,6 +1125,12 @@ function PTUnitFrame:GenerateCooldownFrames()
             name = "Create Soulstone (Major)",
             texture = "Interface\\Icons\\spell_shadow_soulgem",
             duration = 30 * 60
+        },
+        -- SHAMAN HEALER
+        ["Spirit Link"] = {
+            name = "Spirit Link",
+            texture = "Interface\\Icons\\spell_holy_purify",
+            duration = 10 * 60
         }
     }
 
@@ -1153,8 +1158,7 @@ function PTUnitFrame:GenerateCooldownFrames()
                 local icon = aura.icon
                 icon:Show()
                 icon:SetAllPoints(frame)
-                --print(spell)
-                --Roids.Print(self.currentCD[spell])
+
                 if self.currentCD[spell] then
                     CooldownFrame_SetTimer(aura.duration, self.currentCD[spell].start, self.currentCD[spell].duration, 1)
                 end
@@ -1175,11 +1179,6 @@ function PTUnitFrame:GenerateCooldownFrames()
                 local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
                 local cooldown
 
-                --Roids.Print(self.cooldownReducingTalent)
-                --[[for i in pairs(self.cooldownReducingTalent) do
-                    Roids.Print(i)
-                end]]
-                
                 if self.cooldownReducingTalent[spell] then
                     cooldown = trackedCooldowns[spell].duration - self.cooldownReducingTalent[spell]
                 elseif self.cooldownReducingTalent["Crusader Strike"] then
@@ -1233,8 +1232,8 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             compost:Reclaim(cooldowns)
             self:GenerateCooldownFrames()
         else
-            self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
-            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self)
+            Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+            --self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
         end
     else
         if self.cooldownFrames then
