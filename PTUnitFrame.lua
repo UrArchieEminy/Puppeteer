@@ -1206,16 +1206,16 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
     if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
         if self:GetName() == UnitName("player") then
-            for tab = 1, GetNumTalentTabs() do
-                for talent = 1, GetNumTalents(tab) do
-                    nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
-                    if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
-                        for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
-                            self.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * rank
-                        end
-                    end
-                end
-            end
+            --for tab = 1, GetNumTalentTabs() do
+            --    for talent = 1, GetNumTalents(tab) do
+            --        nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
+            --        if PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] then
+            --            for spell in PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent] do
+            --                self.cooldownReducingTalent[spell] = PuppeteerSettings.COOLDOWN_REDUCING_TALENTS[nameTalent][spell] * rank
+            --            end
+            --        end
+            --    end
+            --end
             local cooldowns = compost:GetTable()
             if string.find(self.unit, "focus") then
                 util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])

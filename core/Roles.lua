@@ -306,23 +306,23 @@ talentScanner:SetScript("OnEvent", function()
 end)
 
 local function requestTalents(name)
-    if name == UnitName("player") then
-        if talentMessageHandler then
-                talentMessageHandler("INSTalentShow", UnitName("player"))
-            return
-        end
-    end
+    --if name == UnitName("player") then
+    --    if talentMessageHandler then
+    --            talentMessageHandler("INSTalentShow", UnitName("player"))
+    --        return
+    --    end
+    --end
     
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
+    --SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
 end
 
 function startTalentScan(name, class, temporary, a)
     --Roids.Print(a.." "..name)
-    PlayerTalentData[name] = {class = class, trees = {}}
-    talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
-    scanTimeoutAt = GetTime() + SCAN_TIMEOUT
-    disableTalentMessageProcessing()
+    --PlayerTalentData[name] = {class = class, trees = {}}
+    --talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
+    --scanTimeoutAt = GetTime() + SCAN_TIMEOUT
+    --disableTalentMessageProcessing()
     temp = temporary
     class = class
     requestTalents(name)
