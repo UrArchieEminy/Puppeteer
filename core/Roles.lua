@@ -8,7 +8,6 @@ local compost = AceLibrary("Compost-2.0")
 
 local trackedUi = nil -- this is in use to get talents for ui display it's temporary for a proof of concept
 local temp = nil
-local class = class
 
 
 AssignedRoles = nil
@@ -267,7 +266,7 @@ talentScanner:SetScript("OnEvent", function()
             end
         end
 
-        if string.find(message, "CDShow", 1, true) and temp then -- person who is asked to get cooldowns from
+        if string.find(message, "CDShow", 1, true) then -- person who is asked to get cooldowns from
             local ui = GetUnitFrames("player")[1]
             local cooldowns = compost:GetTable()
 
@@ -290,7 +289,7 @@ talentScanner:SetScript("OnEvent", function()
             end
             compost:Reclaim(cooldowns)
         end
-        if string.find(message, "CDInfo;", 1, true) and temp then -- person who sent the request to know the cooldowns
+        if string.find(message, "CDInfo;", 1, true) then -- person who sent the request to know the cooldowns
             local split = SplitString(message, ';')
             local unit = split[2]
             local spell = split[3]
@@ -311,26 +310,27 @@ talentScanner:SetScript("OnEvent", function()
 end)
 
 local function requestTalents(name)
-    --if name == UnitName("player") then
-    --    if talentMessageHandler then
-    --            talentMessageHandler("INSTalentShow", UnitName("player"))
-    --        return
-    --    end
-    --end
-    
-    --SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
+    if name == UnitName("player") then
+        if talentMessageHandler then
+                talentMessageHandler("INSTalentShow", UnitName("player"))
+            return
+        end
+    end
+
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "INSTalentShow", "GUILD")
 end
 
-function startTalentScan(name, class, temporary, a)
+function startTalentScan(name, class)
     --Roids.Print(a.." "..name)
-    --PlayerTalentData[name] = {class = class, trees = {}}
-    --talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
-    --scanTimeoutAt = GetTime() + SCAN_TIMEOUT
-    --disableTalentMessageProcessing()
-    temp = temporary
-    class = class
+    PlayerTalentData[name] = {class = class, trees = {}}
+    talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
+    scanTimeoutAt = GetTime() + SCAN_TIMEOUT
+    disableTalentMessageProcessing()
     requestTalents(name)
+end
+
+function getUnitCooldown(name)
+    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
 end
 
 function AutoRole(unit)

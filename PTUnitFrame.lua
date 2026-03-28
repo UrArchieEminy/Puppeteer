@@ -64,6 +64,168 @@ PTUnitFrame.inSight = true
 
 PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 
+
+local trackedCooldowns = {
+    -- PALADIN GENERAL
+    ["Hand of Freedom"] = {
+        name = "Hand of Freedom",
+        texture = "Interface\\Icons\\spell_holy_sealofvalor",
+        duration = 24,
+    },
+    ["Hand of Protection"] = {
+        name = "Hand of Protection",
+        texture = "Interface\\Icons\\spell_holy_sealofprotection",
+        duration = 5 * 60,
+    },
+    ["Divine Shield"] = {
+        name = "Divine Shield",
+        texture = "Interface\\Icons\\spell_holy_divineintervention",
+        duration = 5 * 60,
+    },
+    ["Divine Intervention"] = {
+        name = "Divine Intervention",
+        texture = "Interface\\Icons\\spell_nature_timestop",
+        duration = 60 * 60,
+    },
+    ["Lay on Hands"] = {
+        name = "Lay on Hands",
+        texture = "Interface\\Icons\\spell_holy_layonhands",
+        duration = 60 * 60,
+    },
+    ["Hammer of Justice"] = {
+        name = "Hammer of Justice",
+        texture = "Interface\\Icons\\spell_holy_sealofmight",
+        duration = 60,
+    },
+    -- TANK
+    ["Bulwark of the Righteous"] = {
+        name = "Bulwark of the Righteous",
+        texture = "Interface\\Icons\\ability_warrior_victoryrush",
+        duration = 5 * 60,
+    },
+    -- HEALER
+    ["Holy Shock"] = {
+        name = "Holy Shock",
+        texture = "Interface\\Icons\\spell_holy_searinglight",
+        duration = 15,
+    },
+    -- WARRIOR
+    ["Last Stand"] = {
+        name = "Last Stand",
+        texture = "Interface\\Icons\\spell_holy_ashestoashes",
+        duration = 10 * 60,
+    },
+    ["Shield Wall"] = {
+        name = "Shield Wall",
+        texture = "Interface\\Icons\\ability_warrior_shieldwall",
+        duration = 30 * 60,
+    },
+    ["Death Wish"] = {
+        name = "Death Wish",
+        texture = "Interface\\Icons\\spell_shadow_deathpact",
+        duration = 3 * 60,
+    },
+    ["Challenging Shout"] = {
+        name = "Challenging Shout",
+        texture = "Interface\\Icons\\ability_bullrush",
+        duration = 2 * 60,
+    },
+    ["Mocking Blow"] = {
+        name = "Mocking Blow",
+        texture = "Interface\\Icons\\ability_warrior_punishingblow",
+        duration = 2 * 60,
+    },
+    -- TANK
+    ["Taunt"] = {
+        name = "Taunt",
+        texture = "Interface\\Icons\\spell_nature_reincarnation",
+        duration = 10,
+    },
+    -- PRIEST GENERAL
+    ["Power Word: Shield"] = {
+        name = "Power Word: Shield",
+        texture = "Interface\\Icons\\spell_holy_powerwordshield",
+        duration = 4,
+    },
+    ["Fear Ward"] = {
+        name = "Fear Ward",
+        texture = "Interface\\Icons\\spell_holy_excorcism",
+        duration = 30,
+    },
+    -- PRIEST HEALER
+    ["Ascendance"] = {
+        name = "Ascendance",
+        texture = "Interface\\Icons\\spell_holy_purify",
+        duration = 5 * 60,
+    },
+    --DRUID GENERAL
+    ["Rebirth"] = {
+        name = "Rebirth",
+        texture = "Interface\\Icons\\spell_nature_reincarnation",
+        duration = 30 * 60,
+    },
+    ["Innervate"] = {
+        name = "Innervate",
+        texture = "Interface\\Icons\\spell_nature_lightning",
+        duration = 6 * 60,
+    },
+    ["Tranquility"] = {
+        name = "Tranquility",
+        texture = "Interface\\Icons\\spell_nature_tranquility",
+        duration = 30 * 60,
+    },
+    -- DRUID HEALER
+    ["Swiftmend"] = {
+        name = "Swiftmend",
+        texture = "Interface\\Icons\\inv_relics_idolofrejuvenation",
+        duration = 15,
+    },
+    -- DRUID TANK
+    ["BarkSkin(Feral)"] = {
+        name = "BarkSkin(Feral)",
+        texture = "Interface\\Icons\\spell_nature_stoneclawtotem",
+        duration = 60 * 10,
+    },
+    ["Challenging Roar"] = {
+        name = "Challenging Roar",
+        texture = "Interface\\Icons\\ability_druid_challangingroar",
+        duration = 10 * 60,
+    },
+    ["Frenzied Regeneration"] = {
+        name = "Frenzied Regeneration",
+        texture = "Interface\\Icons\\ability_bullrush",
+        duration = 5 * 60,
+    },
+    ["Enrage"] = {
+        name = "Enrage",
+        texture = "Interface\\Icons\\ability_druid_enrage",
+        duration = 60,
+    },
+    ["Feral Charge"] = {
+        name = "Feral Charge",
+        texture = "Interface\\Icons\\ability_hunter_pet_bear",
+        duration = 15,
+    },
+    -- HUNTER
+    ["Tranquilizing Shot"] = {
+        name = "Tranquilizing Shot",
+        texture = "Interface\\Icons\\spell_nature_drowsy",
+        duration = 20,
+    },
+    -- WARLOCK
+    ["Create Soulstone (Major)"] = {
+        name = "Create Soulstone (Major)",
+        texture = "Interface\\Icons\\spell_shadow_soulgem",
+        duration = 30 * 60
+    },
+    -- SHAMAN HEALER
+    ["Spirit Link"] = {
+        name = "Spirit Link",
+        texture = "Interface\\Icons\\spell_holy_purify",
+        duration = 10 * 60
+    }
+}
+
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
         auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {},
@@ -971,169 +1133,10 @@ function PTUnitFrame:GenerateCooldownFrames()
         local icon = aura.icon
         icon:Hide()
         icon:ClearAllPoints()
-        CooldownFrame_SetTimer(aura.duration, 0, 0, 0)
+        CooldownFrame_SetTimer(aura.duration, GetTime(), 0, 0)
+        aura.durationText:SetText("")
     end
 
-    local trackedCooldowns = {
-        -- PALADIN GENERAL
-        ["Hand of Freedom"] = {
-            name = "Hand of Freedom",
-            texture = "Interface\\Icons\\spell_holy_sealofvalor",
-            duration = 24,
-        },
-        ["Hand of Protection"] = {
-            name = "Hand of Protection",
-            texture = "Interface\\Icons\\spell_holy_sealofprotection",
-            duration = 5 * 60,
-        },
-        ["Divine Shield"] = {
-            name = "Divine Shield",
-            texture = "Interface\\Icons\\spell_holy_divineintervention",
-            duration = 5 * 60,
-        },
-        ["Divine Intervention"] = {
-            name = "Divine Intervention",
-            texture = "Interface\\Icons\\spell_nature_timestop",
-            duration = 60 * 60,
-        },
-        ["Lay on Hands"] = {
-            name = "Lay on Hands",
-            texture = "Interface\\Icons\\spell_holy_layonhands",
-            duration = 60 * 60,
-        },
-        ["Hammer of Justice"] = {
-            name = "Hammer of Justice",
-            texture = "Interface\\Icons\\spell_holy_sealofmight",
-            duration = 60,
-        },
-        -- TANK
-        ["Bulwark of the Righteous"] = {
-            name = "Bulwark of the Righteous",
-            texture = "Interface\\Icons\\ability_warrior_victoryrush",
-            duration = 5 * 60,
-        },
-        -- HEALER
-        ["Holy Shock"] = {
-            name = "Holy Shock",
-            texture = "Interface\\Icons\\spell_holy_searinglight",
-            duration = 15,
-        },
-        -- WARRIOR
-        ["Last Stand"] = {
-            name = "Last Stand",
-            texture = "Interface\\Icons\\spell_holy_ashestoashes",
-            duration = 10 * 60,
-        },
-        ["Shield Wall"] = {
-            name = "Shield Wall",
-            texture = "Interface\\Icons\\ability_warrior_shieldwall",
-            duration = 30 * 60,
-        },
-        ["Death Wish"] = {
-            name = "Death Wish",
-            texture = "Interface\\Icons\\spell_shadow_deathpact",
-            duration = 3 * 60,
-        },
-        ["Challenging Shout"] = {
-            name = "Challenging Shout",
-            texture = "Interface\\Icons\\ability_bullrush",
-            duration = 2 * 60,
-        },
-        ["Mocking Blow"] = {
-            name = "Mocking Blow",
-            texture = "Interface\\Icons\\ability_warrior_punishingblow",
-            duration = 2 * 60,
-        },
-        -- TANK
-        ["Taunt"] = {
-            name = "Taunt",
-            texture = "Interface\\Icons\\spell_nature_reincarnation",
-            duration = 10,
-        },
-        -- PRIEST GENERAL
-        ["Power Word: Shield"] = {
-            name = "Power Word: Shield",
-            texture = "Interface\\Icons\\spell_holy_powerwordshield",
-            duration = 4,
-        },
-        ["Fear Ward"] = {
-            name = "Fear Ward",
-            texture = "Interface\\Icons\\spell_holy_excorcism",
-            duration = 4,
-        },
-        -- PRIEST HEALER
-        ["Ascendance"] = {
-            name = "Ascendance",
-            texture = "Interface\\Icons\\spell_holy_purify",
-            duration = 5 * 60,
-        },
-        --DRUID GENERAL
-        ["Rebirth"] = {
-            name = "Rebirth",
-            texture = "Interface\\Icons\\spell_nature_reincarnation",
-            duration = 30 * 60,
-        },
-        ["Innervate"] = {
-            name = "Innervate",
-            texture = "Interface\\Icons\\spell_nature_lightning",
-            duration = 6 * 60,
-        },
-        ["Tranquility"] = {
-            name = "Tranquility",
-            texture = "Interface\\Icons\\spell_nature_tranquility",
-            duration = 30 * 60,
-        },
-        -- DRUID HEALER
-        ["Swiftmend"] = {
-            name = "Swiftmend",
-            texture = "Interface\\Icons\\inv_relics_idolofrejuvenation",
-            duration = 15,
-        },
-        -- DRUID TANK
-        ["BarkSkin(Feral)"] = {
-            name = "BarkSkin(Feral)",
-            texture = "Interface\\Icons\\spell_nature_stoneclawtotem",
-            duration = 60 * 10,
-        },
-        ["Challenging Roar"] = {
-            name = "Challenging Roar",
-            texture = "Interface\\Icons\\ability_druid_challangingroar",
-            duration = 10 * 60,
-        },
-        ["Frenzied Regeneration"] = {
-            name = "Frenzied Regeneration",
-            texture = "Interface\\Icons\\ability_bullrush",
-            duration = 5 * 60,
-        },
-        ["Enrage"] = {
-            name = "Enrage",
-            texture = "Interface\\Icons\\ability_druid_enrage",
-            duration = 60,
-        },
-        ["Feral Charge"] = {
-            name = "Feral Charge",
-            texture = "Interface\\Icons\\ability_hunter_pet_bear",
-            duration = 15,
-        },
-        -- HUNTER
-        ["Tranquilizing Shot"] = {
-            name = "Tranquilizing Shot",
-            texture = "Interface\\Icons\\spell_nature_drowsy",
-            duration = 20,
-        },
-        -- WARLOCK
-        ["Create Soulstone (Major)"] = {
-            name = "Create Soulstone (Major)",
-            texture = "Interface\\Icons\\spell_shadow_soulgem",
-            duration = 30 * 60
-        },
-        -- SHAMAN HEALER
-        ["Spirit Link"] = {
-            name = "Spirit Link",
-            texture = "Interface\\Icons\\spell_holy_purify",
-            duration = 10 * 60
-        }
-    }
 
     local cooldownProps = self:GetProfile().CooldownTracker
     local cooldowns = compost:GetTable()
@@ -1163,6 +1166,8 @@ function PTUnitFrame:GenerateCooldownFrames()
                 if self.currentCD[spell] and self.currentCD[spell] > 0 then
                     CooldownFrame_SetTimer(aura.duration, GetTime(), self.currentCD[spell], 1)
                     self.currentCD[spell] = 0
+                else
+                    CooldownFrame_SetTimer(aura.duration, GetTime(), 0, 0)
                 end
             else
                 local frame = CreateFrame("Frame", nil, self.healthBar)
@@ -1178,7 +1183,10 @@ function PTUnitFrame:GenerateCooldownFrames()
                 icon:SetAllPoints(frame)
                 icon:SetTexture(trackedCooldowns[spell].texture)
 
-                local duration = PTUnitFrame:SuperWoWFrameTimer(frame).duration
+                local time = PTUnitFrame:SuperWoWFrameTimer(frame)
+
+                local duration = time.duration
+                local durationText = time.durationText
 
                 duration:SetModelScale(0.5)
                 duration.displayAt = 60 * 60
@@ -1196,8 +1204,10 @@ function PTUnitFrame:GenerateCooldownFrames()
 
                 if self.currentCD[spell] then
                     CooldownFrame_SetTimer(duration, GetTime(), self.currentCD[spell], 1)
+                else
+                    CooldownFrame_SetTimer(duration, GetTime(), 0, 0)
                 end
-                self.cooldownFrames[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration, ["cooldown"] =  cooldown}
+                self.cooldownFrames[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration,["durationText"] = durationText ,["cooldown"] = cooldown}
             end
         end
     end
@@ -1245,11 +1255,12 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             local _, guid = UnitExists(self.unit)
             if UnitInRaid(guid) then -- only update raid frames if in raid, reducing amount of updated frames
                 if string.find(self.unit, "raid") or string.find(self.unit, "focus") then
-                    Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+                    Roids.Print(self.unit)
+                    Puppeteer.getUnitCooldown(self:GetName())
                 end
             else -- unit alone or on party so ignore raid frames
                 if string.find(self.unit, "party") or string.find(self.unit, "focus") then
-                    Puppeteer.startTalentScan(self:GetName(), util.GetClass(self.unit), true, self.unit)
+                    Puppeteer.getUnitCooldown(self:GetName())
                 end
             end
             self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
