@@ -13,6 +13,7 @@ Puppeteer, formerly HealersMate, is a unit frames addon for World of Warcraft Va
 - See when players/enemies are out of your line-of-sight (**[UnitXP SP3 Required](#client-mods-that-enhance-puppeteer)**)
 - See the remaining duration of buffs and HoTs on other players (**[SuperWoW Required](#client-mods-that-enhance-puppeteer)**)
 - Add players/enemies to a separate Focus group, even if they're not in your party or raid (**[SuperWoW Required](#client-mods-that-enhance-puppeteer)**)
+- Track general class cooldowns aswell as role assignement for heal/tank cooldowns
 
 <p align="left">
   <img src="https://github.com/OldManAlpha/HealersMate/raw/main/Screenshots/Party-Example.PNG" alt="Party Example" width=15%>
@@ -85,3 +86,4 @@ Tentative, this could change at any time.
 - Turtle WoW Community - Answers to addon development questions
 - [Shagu](https://github.com/shagu) - Utility functions, providing a wealth of research material, and general inspiration
 - @blondieart (Discord) - Created the art at the top of this page
+- [OldManAlpha](https://github.com/OldManAlpha) - Current project runner, the one I forked it from
