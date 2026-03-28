@@ -1255,7 +1255,6 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             local _, guid = UnitExists(self.unit)
             if UnitInRaid(guid) then -- only update raid frames if in raid, reducing amount of updated frames
                 if string.find(self.unit, "raid") or string.find(self.unit, "focus") then
-                    Roids.Print(self.unit)
                     Puppeteer.getUnitCooldown(self:GetName())
                 end
             else -- unit alone or on party so ignore raid frames
