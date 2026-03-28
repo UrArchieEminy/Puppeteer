@@ -1140,8 +1140,6 @@ function PTUnitFrame:GenerateCooldownFrames()
 
     for index, spell in ipairs(cooldowns) do
         if trackedCooldowns[spell] then
-            Roids.Print(self.unit)
-            Roids.Print(spell)
             if self.cooldownFrames[spell] then
                 local aura = self.cooldownFrames[spell]
                 local frame = aura.frame
@@ -2087,8 +2085,6 @@ end
 
 function PTUnitFrame:GetGroupCooldown()
     local cds = {}
-    Roids.Print(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"])
-    Roids.Print(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"])
     if Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"] ~= "" then
         table.insert(cds, Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"])
     end
