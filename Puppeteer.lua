@@ -375,6 +375,8 @@ function OnAddonLoaded()
     
     SetLFTAutoRoleEnabled(PTOptions.LFTAutoRole)
 
+    CheckCooldownRaidFramesEnabled()
+
     SetOutOfRangeArrowEnabled(PTOptions.OutOfRangeArrow)
 
     if util.IsSuperWowPresent() then
@@ -608,6 +610,39 @@ function SetPartyFramesEnabled(enabled)
                 frame.Show = function() end
                 frame:Hide()
             end
+        end
+    end
+end
+
+function CheckCooldownPartyFramesEnabled()
+    local shouldBeDisabled = not CurrentlyInRaid and PTOptions.DisableCooldownFrames.InParty
+    SetCooldownPartyFramesEnabled(not shouldBeDisabled, "party")
+end
+function CheckCooldownRaidFramesEnabled()
+    local shouldBeDisabled = CurrentlyInRaid and PTOptions.DisableCooldownFrames.InRaid
+    SetCooldownPartyFramesEnabled(not shouldBeDisabled, "raid")
+end
+
+function SetCooldownPartyFramesEnabled(enabled, group)
+    if enabled then
+        for _, frame in ipairs(AllUnitFrames) do
+            if frame:IsShown() and (string.find(frame.unit, group) or string.find(frame.unit, "player")) then
+                frame:GetTalentAndGenerateFrames()
+            end
+        end
+    else
+        for _, frame in ipairs(AllUnitFrames) do
+            if frame:IsShown() and (string.find(frame.unit, group) or string.find(frame.unit, "player")) then
+                frame:HideCooldownFrames()
+            end
+        end
+    end
+end
+
+function UpdateGroupClassCooldown()
+    for _, ui in ipairs(AllUnitFrames) do
+        if ui:IsShown() and ui:GetClass() == PTOptions.GroupClassCooldown and not string.find(ui.unit, "focus") then
+            ui:GetTalentAndGenerateFrames()
         end
     end
 end

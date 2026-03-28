@@ -114,6 +114,10 @@ function SetDefaults()
                 ["InParty"] = false,
                 ["InRaid"] = false
             },
+            ["DisableCooldownFrames"] = {
+                ["InParty"] = false,
+                ["InRaid"] = false
+            },
             ["SpellsTooltip"] = {
                 ["Enabled"] = isHealer,
                 ["AttachTo"] = "Button", -- "Button", "Frame", "Group", "Screen"
@@ -143,6 +147,29 @@ function SetDefaults()
                 ["MaxDistanceTracking"] = 80, -- The maxmimum distance to start closely tracking distance
                 ["MaxSightTracking"] = 80 -- The maximum distance to closely track sight
             },
+            ["GroupFrameCooldowns"] = {
+                ["PALADIN"] = {
+                    ["1"] = "Hand of Protection",
+                    ["2"] = "Divine Intervention"
+                },
+                ["DRUID"] = {
+                    ["1"] = "Rebirth",
+                    ["2"] = ""
+                },
+                ["HUNTER"] = {
+                    ["1"] = "Tranquilizing Shot",
+                    ["2"] = ""
+                },
+                ["WARLOCK"] = {
+                    ["1"] = "Create Soulstone (Major)",
+                    ["2"] = ""
+                },
+                ["PRIEST"] = {
+                    ["1"] = "Fear Ward",
+                    ["2"] = ""
+                }
+            },
+            ["GroupClassCooldown"] = "",
             ["CastWhen"] = "Mouse Up", -- Mouse Up, Mouse Down
             ["CastWhenKey"] = "Key Up", -- Key Up, Key Down
             ["AutoResurrect"] = util.ResurrectionSpells[util.GetClass("player")] ~= nil,

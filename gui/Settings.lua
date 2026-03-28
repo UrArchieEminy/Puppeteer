@@ -522,6 +522,27 @@ function CreateTab_Options_Other(panel)
     factory:checkbox("(TWoW) LFT Auto Role", {"Automatically assign roles when joining LFT groups", 
             "This functionality was tested for 1.18.0 and may break in future updates"}, "LFTAutoRole",
             function() Puppeteer.SetLFTAutoRoleEnabled(PTOptions.LFTAutoRole) end)
+    layout:column(1)
+    factory:label("Hide Cooldown Frames:")
+    layout:column(2):levelAt(1)
+    factory:checkbox("In Party", {"Hide cooldown at party frames while in party", "Includes your own"},
+        "DisableCooldownFrames.InParty", function() Puppeteer.CheckCooldownPartyFramesEnabled() end)
+    layout:column(3):levelAt(2)
+    factory:checkbox("In Raid", {"Hide cooldown at party frames while in raid"},
+        "DisableCooldownFrames.InRaid", function() Puppeteer.CheckCooldownRaidFramesEnabled() end)
+    local editboxes = {}
+    layout:column(1)
+    layout:offset(-55, 0)
+    factory:dropdown("Group CD For:", {"This is the class that you'll be setting the cooldowsn for"}, 
+        "GroupClassCooldown", {"DRUID", "HUNTER", "PALADIN", "PRIEST", "WARLOCK"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
+    layout:column(2):levelAt(1)
+    layout:offset(15, 0)
+    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 1)
+        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown]["1"] or ""))
+    layout:column(3):levelAt(1)
+    layout:offset(50, 0)
+    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 2)
+        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown]["2"] or ""))
 end
 
 function CreateTab_Options_Advanced(panel)
@@ -1270,6 +1291,19 @@ function NewComponentFactory(container, layout)
                 :SetPoint(GetLabelPoint(frame))
             self:doLayout(frame)
             return label, frame
+        end,
+        ["editbox"] = function(self, optionLoc, enterFunc, index)
+            local editbox = CreateSimpleEditbox(container)
+                :SetHeight(25):SetWidth(115)
+            self:doLayout(editbox)
+            editbox:SetScript("OnEnterPressed", function(self)
+                SetOption(optionLoc.."."..Puppeteer.PTOptions.GroupClassCooldown.."."..index, self:GetText())
+                self:ClearFocus()
+                if enterFunc then
+                    enterFunc(self)
+                end
+            end)
+            return editbox
         end
     }
 end
@@ -1314,6 +1348,12 @@ function CreateLinkEditbox(parent, site)
         end)
 end
 
+function CreateSimpleEditbox(parent, enterFunc)
+    return PTGuiLib.Get("editbox", parent)
+        :SetText("")
+        :SetJustifyH("LEFT")
+end
+
 function CreateDropdown(parent, width)
     return PTGuiLib.Get("dropdown", parent)
         :SetSize(width or 140, 25)
@@ -1331,4 +1371,10 @@ end
 
 function CreateLabel(parent, text)
     return PTGuiLib.GetText(parent, text)
+end
+
+function SetEditBoxText(table)
+    for i, box in ipairs(table) do
+        box:SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][tostring(i)] or "")
+    end
 end

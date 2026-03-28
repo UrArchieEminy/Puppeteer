@@ -1125,18 +1125,7 @@ function PTUnitFrame:ReleaseAuras()
 end
 
 function PTUnitFrame:GenerateCooldownFrames()
-    for _, aura in pairs(self.cooldownFrames) do
-        local frame = aura.frame
-        frame:Hide()
-        frame:ClearAllPoints()
-        
-        local icon = aura.icon
-        icon:Hide()
-        icon:ClearAllPoints()
-        CooldownFrame_SetTimer(aura.duration, GetTime(), 0, 0)
-        aura.durationText:SetText("")
-    end
-
+    self:HideCooldownFrames()
 
     local cooldownProps = self:GetProfile().CooldownTracker
     local cooldowns = compost:GetTable()
@@ -1146,11 +1135,13 @@ function PTUnitFrame:GenerateCooldownFrames()
             util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
         end
     else
-        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
+        util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
     end
 
     for index, spell in ipairs(cooldowns) do
         if trackedCooldowns[spell] then
+            Roids.Print(self.unit)
+            Roids.Print(spell)
             if self.cooldownFrames[spell] then
                 local aura = self.cooldownFrames[spell]
                 local frame = aura.frame
@@ -1216,13 +1207,27 @@ function PTUnitFrame:GenerateCooldownFrames()
     compost.Erase(self.cooldownReducingTalent)
 end
 
+function PTUnitFrame:HideCooldownFrames()
+    for _, aura in pairs(self.cooldownFrames) do
+        local frame = aura.frame
+        frame:Hide()
+        frame:ClearAllPoints()
+        
+        local icon = aura.icon
+        icon:Hide()
+        icon:ClearAllPoints()
+        CooldownFrame_SetTimer(aura.duration, GetTime(), 0, 0)
+        aura.durationText:SetText("")
+    end
+end
+
 function PTUnitFrame:GetTalentAndGenerateFrames()
     if not util.IsSuperWowPresent() then
         return
     end
-    if self.unit and UnitIsPlayer(self.unit) and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
+    if self.unit and UnitIsPlayer(self.unit) and (string.find(self.unit, "focus") or self:HasGroupCooldown())
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
-        if self:GetName() == UnitName("player") then
+        if self:GetName() == UnitName("player") and not Puppeteer.PTOptions.DisableCooldownFrames.InParty then
             --for tab = 1, GetNumTalentTabs() do
             --    for talent = 1, GetNumTalents(tab) do
             --        nameTalent, _, _, _, rank = GetTalentInfo(tab, talent)
@@ -1240,7 +1245,7 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
                     util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
                 end
             else
-                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassPartyTrackedCDs[util.GetClass(self.unit)])
+                util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
             end
             for _, spell in ipairs(cooldowns) do
                 local start, duration = GetSpellCooldown(spell)
@@ -1251,30 +1256,28 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             end
             compost:Reclaim(cooldowns)
             self:GenerateCooldownFrames()
-        else
+        elseif self:GetName() ~= UnitName("player") then
             local _, guid = UnitExists(self.unit)
             if UnitInRaid(guid) then -- only update raid frames if in raid, reducing amount of updated frames
-                if string.find(self.unit, "raid") or string.find(self.unit, "focus") then
+                if (not Puppeteer.PTOptions.DisableCooldownFrames.InRaid and string.find(self.unit, "raid")) or string.find(self.unit, "focus") then
                     Puppeteer.getUnitCooldown(self:GetName())
+                    self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
+                else
+                    self:HideCooldownFrames()
                 end
             else -- unit alone or on party so ignore raid frames
-                if string.find(self.unit, "party") or string.find(self.unit, "focus") then
+                if (not Puppeteer.PTOptions.DisableCooldownFrames.InParty and string.find(self.unit, "party")) or string.find(self.unit, "focus") then
                     Puppeteer.getUnitCooldown(self:GetName())
+                    self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
+                else
+                    self:HideCooldownFrames()
                 end
             end
-            self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
+        else
+            self:HideCooldownFrames()
         end
     else
-        if self.cooldownFrames then
-            for _, aura in pairs(self.cooldownFrames) do
-                local frame = aura.frame
-                frame:Hide()
-                frame:ClearAllPoints()
-                local icon = aura.icon
-                icon:Hide()
-                icon:ClearAllPoints()
-            end
-        end
+        self:HideCooldownFrames()
     end
 end
 
@@ -2076,6 +2079,24 @@ function PTUnitFrame:GetProfile()
     return self.owningGroup:GetProfile()
 end
 
+function PTUnitFrame:HasGroupCooldown()
+    local class = self:GetClass()
+    local frameCooldown = Puppeteer.PTOptions.GroupFrameCooldowns
+    return frameCooldown[class]["1"] ~= "" or frameCooldown[class]["2"] ~= ""
+end
+
+function PTUnitFrame:GetGroupCooldown()
+    local cds = {}
+    Roids.Print(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"])
+    Roids.Print(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"])
+    if Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"] ~= "" then
+        table.insert(cds, Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"])
+    end
+    if Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"] ~= "" then
+        table.insert(cds, Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"])
+    end
+    return cds
+end
 
 -- Out of Range Arrow
 local deadArrowDistance = 30
