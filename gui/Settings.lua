@@ -1041,6 +1041,13 @@ function CreateTab_Customize()
     add(createSlider("Health Bar Height", {"The height of the health bar", visualIssues}, "HealthBarHeight", 1, 100))
     add(createSlider("Power Bar Height", {"The height of the power bar", visualIssues}, "PowerBarHeight", 1, 100))
     add(createSlider("Aura Tracker Height", {"The height of tracked auras", visualIssues}, "AuraTracker.Height", 0, 50))
+    add(createSlider("Group Cooldown Height", {"The hight of the tracked cooldowns on group frames"}, "CooldownTracker.Height", 1, 50))
+    add(createSlider("Group Cooldown Width", {"The width of the tracked cooldowns on group frames"}, "CooldownTracker.Width", 1, 50))
+    add(createDropdown("Group CD AlignmentH", "The side of the healthframe the cooldowns are aligned to horizontally", "CooldownTracker.AlignmentH", {"LEFT", "RIGHT"}))
+    add(createDropdown("Group CD AlignmentV", "The side of the healthframe the cooldowns are aligned to vertically", "CooldownTracker.AlignmentV", {"TOP", "BOTTOM"}))
+    add(createSlider("Group Cooldown xOffset", {"The hight of the tracked cooldowns on group frames"}, "CooldownTracker.OffsetY", -50, 50))
+    add(createSlider("Group Cooldown yOffset", {"The width of the tracked cooldowns on group frames"}, "CooldownTracker.OffsetX", -50, 50))
+    add(createSlider("Group CD per line", {"The amount of cooldown frames before going down a frame line, 0 meaning no break"}, "CooldownTracker.FramePerAxis", 0, 10))
     PopulateStyleOverrides()
 end
 

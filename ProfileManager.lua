@@ -104,17 +104,16 @@ function InitializeDefaultProfiles()
             ["AlignmentV"] = "BOTTOM",
         },
         ["CooldownTracker"] = {
-            ["PaddingH"] = 0,
             ["Opacity"] = 100,
-            ["OffsetX"] = -16,
+            ["OffsetX"] = 0,
             ["Anchor"] = "Health Bar",
-            ["PaddingV"] = 0,
             ["AlignmentH"] = "RIGHT",
             ["Width"] = 16,
             ["ObjectType"] = "Sized",
             ["Height"] = 16,
             ["OffsetY"] = 0,
             ["AlignmentV"] = "TOP",
+            ["FramePerAxis"] = 0
         },
         ["AlwaysShowMissingHealth"] = false,
         ["PowerText"] = {
@@ -367,7 +366,6 @@ function InitializeDefaultProfiles()
         ["CooldownTracker"] = {
             ["Height"] = 14,
             ["Width"] = 14,
-            ["OffsetX"] = -14,
         },
         ["PaddingTop"] = 12,
         ["HealthBarHeight"] = 24,
@@ -535,7 +533,6 @@ function InitializeDefaultProfiles()
             ["Width"] = 20,
             ["Height"] = 20,
             ["OffsetY"] = 21,
-            ["OffsetX"] = 20,
         },
         ["HealthTexts"] = {
             ["Normal"] = {
