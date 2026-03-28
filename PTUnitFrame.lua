@@ -1146,13 +1146,13 @@ function PTUnitFrame:GenerateCooldownFrames()
                 frame:Show()
                 frame:SetWidth(cooldownProps.Width)
                 frame:SetHeight(cooldownProps.Height)
-                
+
                 local offsetX 
                 local y = math.floor((index - 1) / cooldownProps.FramePerAxis)
                 local line = cooldownProps.FramePerAxis == 0 and 0 or y * cooldownProps.Height
                 local frameOffset = cooldownProps.FramePerAxis == 0 and (index - 1) * cooldownProps.Width or cooldownProps.FramePerAxis * cooldownProps.Width * y - (index - 1) * cooldownProps.Width
                 local offsetY = cooldownProps.AlignmentV == "TOP" and -line + cooldownProps.OffsetY or line + cooldownProps.OffsetY
-                local offsetX = cooldownProps.AlignmentH == "LEFT" and -(frameOffset + cooldownProps.OffsetX) or frameOffset + cooldownProps.OffsetX
+                local offsetX = cooldownProps.AlignmentH == "LEFT" and frameOffset + cooldownProps.OffsetX or -frameOffset + cooldownProps.OffsetX
 
                 frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, offsetX, offsetY)
 
@@ -1178,7 +1178,7 @@ function PTUnitFrame:GenerateCooldownFrames()
                 local line = cooldownProps.FramePerAxis == 0 and 0 or y * cooldownProps.Height
                 local frameOffset = cooldownProps.FramePerAxis == 0 and (index - 1) * cooldownProps.Width or cooldownProps.FramePerAxis * cooldownProps.Width * y - (index - 1) * cooldownProps.Width
                 local offsetY = cooldownProps.AlignmentV == "TOP" and -line + cooldownProps.OffsetY or line + cooldownProps.OffsetY
-                local offsetX = cooldownProps.AlignmentH == "LEFT" and -(frameOffset + cooldownProps.OffsetX) or frameOffset + cooldownProps.OffsetX
+                local offsetX = cooldownProps.AlignmentH == "LEFT" and frameOffset + cooldownProps.OffsetX or -frameOffset + cooldownProps.OffsetX
 
                 frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, offsetX, offsetY)
                 frame:Show()
