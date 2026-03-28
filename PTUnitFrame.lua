@@ -1146,9 +1146,15 @@ function PTUnitFrame:GenerateCooldownFrames()
                 frame:Show()
                 frame:SetWidth(cooldownProps.Width)
                 frame:SetHeight(cooldownProps.Height)
-                frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH,
-                cooldownProps.AlignmentH == "LEFT" and ((index - 1) * cooldownProps.Width) + cooldownProps.OffsetX
-                or -(((index - 1) * cooldownProps.Width) + cooldownProps.OffsetX), cooldownProps.OffsetY)
+                
+                local offsetX 
+                local y = math.floor((index - 1) / cooldownProps.FramePerAxis)
+                local line = cooldownProps.FramePerAxis == 0 and 0 or y * cooldownProps.Height
+                local frameOffset = cooldownProps.FramePerAxis == 0 and (index - 1) * cooldownProps.Width or cooldownProps.FramePerAxis * cooldownProps.Width * y - (index - 1) * cooldownProps.Width
+                local offsetY = cooldownProps.AlignmentV == "TOP" and -line + cooldownProps.OffsetY or line + cooldownProps.OffsetY
+                local offsetX = cooldownProps.AlignmentH == "LEFT" and -(frameOffset + cooldownProps.OffsetX) or frameOffset + cooldownProps.OffsetX
+
+                frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, offsetX, offsetY)
 
                 local icon = aura.icon
                 icon:Show()
