@@ -10,6 +10,7 @@ local compost = AceLibrary("Compost-2.0")
 PTUnitFrame.owningGroup = nil
 
 PTUnitFrame.unit = nil
+PTUnitFrame.unitName = nil -- used so the cooldown isn't requested many times on raid/party roster update
 PTUnitFrame.isCustomUnit = false
 PTUnitFrame.guidUnit = nil -- Used for custom units
 
@@ -37,9 +38,8 @@ PTUnitFrame.auraButtons = {}
 PTUnitFrame.auraIcons = {} -- array: {"frame", "icon", "stackText", "button"}
 PTUnitFrame.cooldownFrames = {}
 PTUnitFrame.currentCD = {}
-PTUnitFrame.cooldownReducingTalent = {}
-PTUnitFrame.BlessedStrikes = nil -- special interaction, here before cooldownReducingTalent gets deleted after use ofr memory reasons
-
+PTUnitFrame.CooldownBlacklist = {}
+PTUnitFrame.registerIsDirty = false
 
 PTUnitFrame.targetOutline = nil
 
@@ -66,7 +66,7 @@ PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
-        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {},
+        auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {},
         currentCD = {}}, self)
     return obj
 end
@@ -791,8 +791,11 @@ end
 function PTUnitFrame:HandleCooldown(caster, spell)
     if self.cooldownFrames[spell] then
         CooldownFrame_SetTimer(self.cooldownFrames[spell].duration, GetTime(), self.cooldownFrames[spell].cooldown, 1)
+<<<<<<< Updated upstream
     elseif string.find(self.unit, "focus") and spell == "Crusader Strike" and self.BlessedStrikes == true then
         CooldownFrame_SetTimer(self.cooldownFrames["Holy Shock"].duration, GetTime(), 0, 0)
+=======
+>>>>>>> Stashed changes
     end
 end
 
@@ -963,6 +966,117 @@ function PTUnitFrame:ReleaseAuras()
 end
 
 function PTUnitFrame:GenerateCooldownFrames()
+<<<<<<< Updated upstream
+=======
+    self:HideCooldownFrames()
+
+    local cooldownProps = self:GetProfile().CooldownTracker
+    local cooldowns = compost:GetTable()
+    if string.find(self.unit, "focus") then
+        util.AppendArrayElements(cooldowns, self:GetFocusCooldown())
+    else
+        util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
+    end
+
+    for _, spell in ipairs(self.CooldownBlacklist) do
+        util.RemoveElement(cooldowns, spell)
+    end
+
+    local c = compost:GetTable()
+
+    for index, spell in ipairs(cooldowns) do
+        if Puppeteer.TRACKED_COOLDOWNS[spell] and not util.ArrayContains(self.CooldownBlacklist, spell) then
+            local aura = util.GetTableSize(self.cooldownFrames) > 0 and util.RemoveFromTable(self.cooldownFrames, 1) or nil
+            local frame = aura and aura.frame or CreateFrame("Frame", nil, self.healthBar)
+            frame.unitFrame = self
+
+            frame:SetWidth(cooldownProps.Width)
+            frame:SetHeight(cooldownProps.Height)
+
+            local offsetX 
+            local y = math.floor((index - 1) / cooldownProps.FramePerAxis)
+            local line = cooldownProps.FramePerAxis == 0 and 0 or y * cooldownProps.Height
+            local frameOffset = cooldownProps.FramePerAxis == 0 and (index - 1) * cooldownProps.Width or cooldownProps.FramePerAxis * cooldownProps.Width * y - (index - 1) * cooldownProps.Width
+            local offsetY = cooldownProps.AlignmentV == "TOP" and -line + cooldownProps.OffsetY or line + cooldownProps.OffsetY
+            local offsetX = cooldownProps.AlignmentH == "LEFT" and frameOffset + cooldownProps.OffsetX or -frameOffset + cooldownProps.OffsetX
+
+            frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, offsetX, offsetY)
+            frame:Show()
+
+
+            local icon = aura and aura.icon or frame:CreateTexture(nil, "ARTWORK")
+            icon:SetAllPoints(frame)
+            icon:SetTexture(Puppeteer.TRACKED_COOLDOWNS[spell].texture)
+            icon:Show()
+
+            local time = aura and nil or PTUnitFrame:SuperWoWFrameTimer(frame)
+
+            local duration = aura and aura.duration or time.duration
+            local durationText = aura and aura.durationText or time.durationText
+            
+            if not aura then
+                duration:SetModelScale(0.5)
+                duration.displayAt = 60 * 60
+            end
+
+            local cooldown = Puppeteer.TRACKED_COOLDOWNS[spell].duration
+            if self.currentCD and spell and self.currentCD[spell] then
+                CooldownFrame_SetTimer(duration, GetTime(), self.currentCD[spell], 1)
+            else
+                CooldownFrame_SetTimer(duration, 0, 0, 0)
+                durationText:SetText("")
+            end
+            c[spell] = {["frame"] = frame, ["icon"] = icon, ["duration"] = duration,["durationText"] = durationText ,["cooldown"] = cooldown}
+        end
+    end
+    for key, value in c do
+        self.cooldownFrames[key] = util.CloneTable(value)
+    end
+
+    util.ClearTable(self.CooldownBlacklist)
+    util.ClearTable(self.currentCD)
+    compost.Reclaim(cooldowns)
+    compost.Reclaim(c)
+end
+
+function PTUnitFrame:GetPlayerCooldowns()
+    local cooldowns = compost:GetTable()
+
+    if string.find(self.unit, "focus") then
+        util.AppendArrayElements(cooldowns, self:GetFocusCooldown())
+    else
+        util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
+    end
+
+    for _, spell in ipairs(cooldowns) do
+        if Puppeteer.HasSpell(spell) then
+            local start, duration = GetSpellCooldown(spell)
+
+            if not Puppeteer.TRACKED_COOLDOWNS[spell] or Puppeteer.TRACKED_COOLDOWNS[spell].duration == 0 then
+                local _ , _, id = GetSpellName(spell)
+                local _, _, iconPath = SpellInfo(id)
+                local remain = start > 0 and duration - (GetTime() - start) or 0
+
+                Puppeteer.TRACKED_COOLDOWNS[spell] = {["name"] = spell, ["texture"] = iconPath, ["duration"] = duration}
+            end
+
+            if start > 0 then
+                local remain = duration - (GetTime() - start)
+                self.currentCD[spell] = remain
+            end
+        else
+            if not util.ArrayContains(self.CooldownBlacklist, spell) then
+                table.insert(self.CooldownBlacklist, spell)
+            end
+        end
+    end
+
+    compost:Reclaim(cooldowns)
+    self:GenerateCooldownFrames()
+end
+
+function PTUnitFrame:HideCooldownFrames()
+>>>>>>> Stashed changes
     for _, aura in pairs(self.cooldownFrames) do
         local frame = aura.frame
         frame:Hide()
@@ -1200,9 +1314,10 @@ function PTUnitFrame:GenerateCooldownFrames()
 end
 
 function PTUnitFrame:GetTalentAndGenerateFrames()
-    if not util.IsSuperWowPresent() then
+    if not util.IsSuperWowPresent() or not self.unit or not UnitIsPlayer(self.unit) or (self.unitName == self:GetName() and self:AllCooldownsRegistered()) then
         return
     end
+<<<<<<< Updated upstream
     if self.unit and (string.find(self.unit, "focus") or PuppeteerSettings.DefaultClassPartyTrackedCDs[self:GetClass()])
         and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
         if self:GetName() == UnitName("player") then
@@ -1246,7 +1361,31 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
                 icon:ClearAllPoints()
             end
         end
+=======
+    if (string.find(self.unit, "focus") and self:HasFocusCooldown()) or (self:HasGroupCooldown() and not string.find(self.unit, "focus")) then
+        self.unitName = self:GetName()
+        if self:GetName() == UnitName("player") and not Puppeteer.PTOptions.DisableCooldownFrames.InParty then
+            self:GetPlayerCooldowns()
+            return
+        elseif self:HasGroupCooldown() or self:HasFocusCooldown() then
+            local _, guid = UnitExists(self.unit)
+
+            if (not Puppeteer.PTOptions.DisableCooldownFrames.InParty and string.find(self.unit, "party"))
+            or (not Puppeteer.PTOptions.DisableCooldownFrames.InRaid and string.find(self.unit, "raid")) then
+                Puppeteer.getUnitCooldown(self:GetName(), self:GetGroupCooldown())
+                self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
+                return
+            end
+            
+            if string.find(self.unit, "focus") then
+                Puppeteer.getUnitCooldown(self:GetName(), self:GetFocusCooldown())
+                self:GenerateCooldownFrames()
+                return
+            end
+        end
+>>>>>>> Stashed changes
     end
+    self:HideCooldownFrames()
 end
 
 function PTUnitFrame:SuperWoWFrameTimer(frame)
@@ -2045,6 +2184,20 @@ function PTUnitFrame:GetProfile()
     return self.owningGroup:GetProfile()
 end
 
+
+function PTUnitFrame:AllCooldownsRegistered()
+    if self.registerIsDirty then
+        return false
+    end
+    local whichTrack = string.find(self.unit, "focus") and self:GetFocusCooldown() or Puppeteer.self:GetGroupCooldown()
+
+    for _, cd in ipairs(whichTrack) do
+        if Puppeteer.TRACKED_COOLDOWNS[cd] and Puppeteer.TRACKED_COOLDOWNS[cd].duration == 0 then
+            return false
+        end
+    end
+    return true
+end
 
 -- Out of Range Arrow
 local deadArrowDistance = 30

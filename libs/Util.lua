@@ -504,6 +504,14 @@ function TraverseTable(v, k1, k2, k3, k4, k5)
     return v
 end
 
+function RemoveFromTable(table)
+    for key, value in pairs(table) do
+        local v = CloneTable(value)
+        table[key] = nil
+        return v
+    end
+end
+
 -- Courtesy of ChatGPT
 function SplitString(str, delimiter)
     local result = {}
