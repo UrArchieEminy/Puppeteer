@@ -167,8 +167,6 @@ TRACKED_COOLDOWNS = {
     }
 }
 
---TODO make spellbook retrival for checking more specific cooldowns
-
 local cooldownRegister = CreateFrame("Frame")
 cooldownRegister:RegisterEvent("CHAT_MSG_ADDON")
 cooldownRegister:SetScript("OnEvent", function()
@@ -178,16 +176,15 @@ cooldownRegister:SetScript("OnEvent", function()
 
         if string.find(message, "CDShow;", 1, true) then -- person who is asked to get cooldowns from
             local spell = SplitString(message, ";")[2]
-            if util.ArrayContains(allBookSpells, spell) then
+            local _, guid = UnitExists("player")
+            if HasSpell(spell) then
                 local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
-                local _, guid = UnitExists("player")
-
+                
                 if not TRACKED_COOLDOWNS[spell] then
                     local _ , _, id = GetSpellName(spell)
                     local _, _, iconPath = SpellInfo(id)
                     local remain = start > 0 and duration - (GetTime() - start) or 0
                     local icon = string.sub(iconPath, 17)
-                    Roids.Print(icon.."     "..spell)
 
                     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain..";"..duration..";"..icon, "GUILD")
                     return
@@ -196,25 +193,10 @@ cooldownRegister:SetScript("OnEvent", function()
                     local remain = duration - (GetTime() - start)
                     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
                 end
+            else
+                SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfoBlacklist;"..guid..";"..spell, "GUILD")
             end
         end
-            --local cooldowns = compost:GetTable()
-            --util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
---
-            --for i, spell in ipairs(cooldowns) do
-            --    local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
-            --    local _, guid = UnitExists("player")
---
-            --    if start > 0 then
-            --        local remain = duration - (GetTime() - start)
-            --        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
-            --    end
-            --    if i == table.getn(cooldowns) then
-            --        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
-            --    end
-            --end
-            --compost:Reclaim(cooldowns)
-        --end
         
         if string.find(message, "CDInfo;", 1, true) then -- person who sent the request to know the cooldowns
             local split = SplitString(message, ';')
@@ -232,6 +214,17 @@ cooldownRegister:SetScript("OnEvent", function()
 
             for ui in UnitFrames(unit) do
                 ui.currentCD[spell] = remain
+            end
+        end
+        if string.find(message, "CDInfoBlacklist;", 1, true) then
+            local split = SplitString(message, ';')
+            local unit = split[2]
+            local spell = split[3]
+
+            for ui in UnitFrames(unit) do
+                if not util.ArrayContains(ui.CooldownBlacklist, spell) then
+                    table.insert(ui.CooldownBlacklist, spell)
+                end
             end
         end
 
@@ -252,13 +245,11 @@ end)
 
 function getUnitCooldown(name, spells)
     for i, spell in ipairs(spells) do
-        Roids.Print(allBookSpells[spell])
         SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow;"..spell, "GUILD")
         if i == getn(spells) then
             SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShowEnd;", "GUILD")
         end
     end
-    PopulateBookSpells()
 end
 
 function PopulateBookSpells()
@@ -273,4 +264,8 @@ function PopulateBookSpells()
             end
         end
     end
+end
+
+function HasSpell(spell)
+    return util.ArrayContains(allBookSpells, spell)
 end

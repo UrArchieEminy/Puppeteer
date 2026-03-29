@@ -644,6 +644,7 @@ end
 function UpdateGroupClassCooldown()
     for _, ui in ipairs(AllUnitFrames) do
         if ui:IsShown() and ui:GetClass() == PTOptions.GroupClassCooldown and not string.find(ui.unit, "focus") then
+            ui.registerIsDirty = true
             ui:GetTalentAndGenerateFrames()
         end
     end
@@ -652,6 +653,7 @@ end
 function UpdateFocusClassCooldown()
     for _, ui in ipairs(AllUnitFrames) do
         if ui:IsShown() and ui:GetClass() == PTOptions.GroupClassCooldown and string.find(ui.unit, "focus") then
+            ui.registerIsDirty = true
             ui:GetTalentAndGenerateFrames()
         end
     end
