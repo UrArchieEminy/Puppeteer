@@ -64,168 +64,6 @@ PTUnitFrame.inSight = true
 
 PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 
-
-local trackedCooldowns = {
-    -- PALADIN GENERAL
-    ["Hand of Freedom"] = {
-        name = "Hand of Freedom",
-        texture = "Interface\\Icons\\spell_holy_sealofvalor",
-        duration = 24,
-    },
-    ["Hand of Protection"] = {
-        name = "Hand of Protection",
-        texture = "Interface\\Icons\\spell_holy_sealofprotection",
-        duration = 5 * 60,
-    },
-    ["Divine Shield"] = {
-        name = "Divine Shield",
-        texture = "Interface\\Icons\\spell_holy_divineintervention",
-        duration = 5 * 60,
-    },
-    ["Divine Intervention"] = {
-        name = "Divine Intervention",
-        texture = "Interface\\Icons\\spell_nature_timestop",
-        duration = 60 * 60,
-    },
-    ["Lay on Hands"] = {
-        name = "Lay on Hands",
-        texture = "Interface\\Icons\\spell_holy_layonhands",
-        duration = 60 * 60,
-    },
-    ["Hammer of Justice"] = {
-        name = "Hammer of Justice",
-        texture = "Interface\\Icons\\spell_holy_sealofmight",
-        duration = 60,
-    },
-    -- TANK
-    ["Bulwark of the Righteous"] = {
-        name = "Bulwark of the Righteous",
-        texture = "Interface\\Icons\\ability_warrior_victoryrush",
-        duration = 5 * 60,
-    },
-    -- HEALER
-    ["Holy Shock"] = {
-        name = "Holy Shock",
-        texture = "Interface\\Icons\\spell_holy_searinglight",
-        duration = 15,
-    },
-    -- WARRIOR
-    ["Last Stand"] = {
-        name = "Last Stand",
-        texture = "Interface\\Icons\\spell_holy_ashestoashes",
-        duration = 10 * 60,
-    },
-    ["Shield Wall"] = {
-        name = "Shield Wall",
-        texture = "Interface\\Icons\\ability_warrior_shieldwall",
-        duration = 30 * 60,
-    },
-    ["Death Wish"] = {
-        name = "Death Wish",
-        texture = "Interface\\Icons\\spell_shadow_deathpact",
-        duration = 3 * 60,
-    },
-    ["Challenging Shout"] = {
-        name = "Challenging Shout",
-        texture = "Interface\\Icons\\ability_bullrush",
-        duration = 2 * 60,
-    },
-    ["Mocking Blow"] = {
-        name = "Mocking Blow",
-        texture = "Interface\\Icons\\ability_warrior_punishingblow",
-        duration = 2 * 60,
-    },
-    -- TANK
-    ["Taunt"] = {
-        name = "Taunt",
-        texture = "Interface\\Icons\\spell_nature_reincarnation",
-        duration = 10,
-    },
-    -- PRIEST GENERAL
-    ["Power Word: Shield"] = {
-        name = "Power Word: Shield",
-        texture = "Interface\\Icons\\spell_holy_powerwordshield",
-        duration = 4,
-    },
-    ["Fear Ward"] = {
-        name = "Fear Ward",
-        texture = "Interface\\Icons\\spell_holy_excorcism",
-        duration = 30,
-    },
-    -- PRIEST HEALER
-    ["Ascendance"] = {
-        name = "Ascendance",
-        texture = "Interface\\Icons\\spell_holy_purify",
-        duration = 5 * 60,
-    },
-    --DRUID GENERAL
-    ["Rebirth"] = {
-        name = "Rebirth",
-        texture = "Interface\\Icons\\spell_nature_reincarnation",
-        duration = 30 * 60,
-    },
-    ["Innervate"] = {
-        name = "Innervate",
-        texture = "Interface\\Icons\\spell_nature_lightning",
-        duration = 6 * 60,
-    },
-    ["Tranquility"] = {
-        name = "Tranquility",
-        texture = "Interface\\Icons\\spell_nature_tranquility",
-        duration = 30 * 60,
-    },
-    -- DRUID HEALER
-    ["Swiftmend"] = {
-        name = "Swiftmend",
-        texture = "Interface\\Icons\\inv_relics_idolofrejuvenation",
-        duration = 15,
-    },
-    -- DRUID TANK
-    ["BarkSkin(Feral)"] = {
-        name = "BarkSkin(Feral)",
-        texture = "Interface\\Icons\\spell_nature_stoneclawtotem",
-        duration = 60 * 10,
-    },
-    ["Challenging Roar"] = {
-        name = "Challenging Roar",
-        texture = "Interface\\Icons\\ability_druid_challangingroar",
-        duration = 10 * 60,
-    },
-    ["Frenzied Regeneration"] = {
-        name = "Frenzied Regeneration",
-        texture = "Interface\\Icons\\ability_bullrush",
-        duration = 5 * 60,
-    },
-    ["Enrage"] = {
-        name = "Enrage",
-        texture = "Interface\\Icons\\ability_druid_enrage",
-        duration = 60,
-    },
-    ["Feral Charge"] = {
-        name = "Feral Charge",
-        texture = "Interface\\Icons\\ability_hunter_pet_bear",
-        duration = 15,
-    },
-    -- HUNTER
-    ["Tranquilizing Shot"] = {
-        name = "Tranquilizing Shot",
-        texture = "Interface\\Icons\\spell_nature_drowsy",
-        duration = 20,
-    },
-    -- WARLOCK
-    ["Create Soulstone (Major)"] = {
-        name = "Create Soulstone (Major)",
-        texture = "Interface\\Icons\\spell_shadow_soulgem",
-        duration = 30 * 60
-    },
-    -- SHAMAN HEALER
-    ["Spirit Link"] = {
-        name = "Spirit Link",
-        texture = "Interface\\Icons\\spell_holy_purify",
-        duration = 10 * 60
-    }
-}
-
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
         auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {}, cooldownReducingTalent = {},
@@ -616,7 +454,7 @@ function PTUnitFrame:ColorizeText(inputText, color)
 end
 
 function PTUnitFrame:UpdateTarget() 
-    if string.find(self.unit, "enemy") then
+    if not self:IsPlayer() and not self:IsFake() and self.targetName then
         local exists, tGuid = UnitExists(self.unit)
         if exists and UnitExists(tGuid .. "target") then
             local tname = GetUnitName(tGuid .. "target")
@@ -1130,16 +968,16 @@ function PTUnitFrame:GenerateCooldownFrames()
     local cooldownProps = self:GetProfile().CooldownTracker
     local cooldowns = compost:GetTable()
     if string.find(self.unit, "focus") then
-        util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
-        if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
-            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
-        end
+        util.AppendArrayElements(cooldowns, self:GetFocusCooldown())
+        --if self:GetRole() and Puppeteer.PTOptions.FocusFrameCooldowns[util.GetClass(self.unit)..self:GetRole()] then
+        --    util.AppendArrayElements(cooldowns, Puppeteer.PTOptions.FocusFrameCooldowns[util.GetClass(self.unit)..self:GetRole()])
+        --end
     else
         util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
     end
 
     for index, spell in ipairs(cooldowns) do
-        if trackedCooldowns[spell] then
+        if Puppeteer.TRACKED_COOLDOWNS[spell] then
             if self.cooldownFrames[spell] then
                 local aura = self.cooldownFrames[spell]
                 local frame = aura.frame
@@ -1186,7 +1024,7 @@ function PTUnitFrame:GenerateCooldownFrames()
 
                 local icon = frame:CreateTexture(nil, "ARTWORK")
                 icon:SetAllPoints(frame)
-                icon:SetTexture(trackedCooldowns[spell].texture)
+                icon:SetTexture(Puppeteer.TRACKED_COOLDOWNS[spell].texture)
 
                 local time = PTUnitFrame:SuperWoWFrameTimer(frame)
 
@@ -1204,7 +1042,7 @@ function PTUnitFrame:GenerateCooldownFrames()
                 --    self.BlessedStrikes = true
                 --    cooldown = trackedCooldowns[spell].duration
                 --else
-                    cooldown = trackedCooldowns[spell].duration
+                    cooldown = Puppeteer.TRACKED_COOLDOWNS[spell].duration
                 --end
 
                 if self.currentCD[spell] then
@@ -1239,8 +1077,10 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
     if not util.IsSuperWowPresent() then
         return
     end
-    if self.unit and UnitIsPlayer(self.unit) and (string.find(self.unit, "focus") or self:HasGroupCooldown())
-        and PuppeteerSettings.DefaultClassTrackedCDs[self:GetClass()] then
+    if self.unit and UnitIsPlayer(self.unit) and 
+        (string.find(self.unit, "focus") and self:HasFocusCooldown()
+        or self:HasGroupCooldown() and not string.find(self.unit, "focus")) then
+
         if self:GetName() == UnitName("player") and not Puppeteer.PTOptions.DisableCooldownFrames.InParty then
             --for tab = 1, GetNumTalentTabs() do
             --    for talent = 1, GetNumTalents(tab) do
@@ -1254,10 +1094,10 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             --end
             local cooldowns = compost:GetTable()
             if string.find(self.unit, "focus") then
-                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)])
-                if self:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()] then
-                    util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass(self.unit)..self:GetRole()])
-                end
+                util.AppendArrayElements(cooldowns, self:GetFocusCooldown())
+                --if self:GetRole() and Puppeteer.PTOptions.FocusFrameCooldowns[util.GetClass(self.unit)..self:GetRole()] then
+                --    util.AppendArrayElements(cooldowns, Puppeteer.PTOptions.FocusFrameCooldowns[util.GetClass(self.unit)..self:GetRole()])
+                --end
             else
                 util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
             end
@@ -2099,16 +1939,40 @@ function PTUnitFrame:HasGroupCooldown()
     if not frameCooldown[class] then 
         return false
     end
-    return frameCooldown[class]["1"] ~= "" or frameCooldown[class]["2"] ~= ""
+    return frameCooldown[class][1] ~= "" or frameCooldown[class][2] ~= ""
+end
+
+function PTUnitFrame:HasFocusCooldown()
+    local class = self:GetClass()
+    local frameCooldown = Puppeteer.PTOptions.FocusFrameCooldowns
+    if not frameCooldown[class] then 
+        return false
+    end
+
+    for _, spell in ipairs(frameCooldown[class]) do
+        if spell ~= "" then
+            return true
+        end
+    end
+    return false
 end
 
 function PTUnitFrame:GetGroupCooldown()
     local cds = {}
-    if Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"] ~= "" then
-        table.insert(cds, Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["1"])
+    for _, spell in ipairs(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]) do
+        if spell ~= "" then
+            table.insert(cds, spell)
+        end
     end
-    if Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"] ~= "" then
-        table.insert(cds, Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]["2"])
+    return cds
+end
+
+function PTUnitFrame:GetFocusCooldown()
+    local cds = {}
+    for _, spell in ipairs(Puppeteer.PTOptions.FocusFrameCooldowns[self:GetClass()]) do
+        if spell ~= "" then
+            table.insert(cds, spell)
+        end
     end
     return cds
 end

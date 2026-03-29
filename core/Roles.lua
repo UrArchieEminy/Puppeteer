@@ -6,9 +6,6 @@ local GetColoredRoleText = util.GetColoredRoleText
 local SplitString = util.SplitString
 local compost = AceLibrary("Compost-2.0")
 
-local trackedUi = nil -- this is in use to get talents for ui display it's temporary for a proof of concept
-local temp = nil
-
 
 AssignedRoles = nil
 
@@ -265,47 +262,6 @@ talentScanner:SetScript("OnEvent", function()
                 end
             end
         end
-
-        if string.find(message, "CDShow", 1, true) then -- person who is asked to get cooldowns from
-            local ui = GetUnitFrames("player")[1]
-            local cooldowns = compost:GetTable()
-
-            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
-            if ui:GetRole() and PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()] then
-                util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")..ui:GetRole()])
-            end
-
-            for i, spell in ipairs(cooldowns) do
-                local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
-                local _, guid = UnitExists("player")
-
-                if start > 0 then
-                    local remain = duration - (GetTime() - start)
-                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
-                end
-                if i == table.getn(cooldowns) then
-                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
-                end
-            end
-            compost:Reclaim(cooldowns)
-        end
-        if string.find(message, "CDInfo;", 1, true) then -- person who sent the request to know the cooldowns
-            local split = SplitString(message, ';')
-            local unit = split[2]
-            local spell = split[3]
-            local remain = tonumber(split[4])
-            for ui in UnitFrames(unit) do
-                ui.currentCD[spell] = remain
-            end
-        end
-        if string.find(message, "CDEnd;", 1, true) then
-            local split = SplitString(message, ';')
-            local unit = split[2]
-
-            for ui in UnitFrames(unit) do
-                ui:GenerateCooldownFrames()
-            end
-        end
     end
 end)
 
@@ -321,16 +277,11 @@ local function requestTalents(name)
 end
 
 function startTalentScan(name, class)
-    --Roids.Print(a.." "..name)
     PlayerTalentData[name] = {class = class, trees = {}}
     talentScanner:SetScript("OnUpdate", TalentScanner_OnUpdate)
     scanTimeoutAt = GetTime() + SCAN_TIMEOUT
     disableTalentMessageProcessing()
     requestTalents(name)
-end
-
-function getUnitCooldown(name)
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
 end
 
 function AutoRole(unit)

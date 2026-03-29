@@ -148,26 +148,26 @@ function SetDefaults()
                 ["MaxSightTracking"] = 80 -- The maximum distance to closely track sight
             },
             ["GroupFrameCooldowns"] = {
-                ["PALADIN"] = {
-                    ["1"] = "Hand of Protection",
-                    ["2"] = "Divine Intervention"
-                },
-                ["DRUID"] = {
-                    ["1"] = "Rebirth",
-                    ["2"] = ""
-                },
-                ["HUNTER"] = {
-                    ["1"] = "Tranquilizing Shot",
-                    ["2"] = ""
-                },
-                ["WARLOCK"] = {
-                    ["1"] = "Create Soulstone (Major)",
-                    ["2"] = ""
-                },
-                ["PRIEST"] = {
-                    ["1"] = "Fear Ward",
-                    ["2"] = ""
-                }
+                ["PALADIN"] = {"Hand of Protection", "Divine Intervention"},
+                ["DRUID"] = {"Rebirth", ""},
+                ["HUNTER"] = {"Tranquilizing Shot", ""},
+                ["WARLOCK"] = {"Create Soulstone (Major)", ""},
+                ["PRIEST"] = {"Fear Ward", ""}
+            },
+            ["FocusFrameCooldowns"] = {
+                ["PALADIN"] = {"Hand of Freedom", "Hand of Protection", "Divine Shield", "Hammer of Justice", "Divine Intervention", "Lay on Hands"},
+                ["PALADINHealer"] = {"Holy Shock"},
+                ["PALADINTank"] = {"Bulwark of the Righteous"},
+                ["WARRIOR"] = {"Last Stand", "Shield Wall", "Death Wish", "Mocking Blow", "Challenging Shout"},
+                ["WARRIORTank"] = {"Taunt"},
+                ["PRIEST"] = {"Power Word: Shield", "Fear Ward"},
+                ["PRIESTHealer"] = {"Ascendance"},
+                ["DRUID"] = {"Rebirth", "Innervate", "Tranquility"},
+                ["DRUIDHealer"] = {"Swiftmend"},
+                ["DRUIDTank"] = {"BarkSkin(Feral)", "Challenging Roar", "Frenzied Regeneration", "Enrage", "Feral Charge"},
+                ["HUNTER"] = {"Tranquilizing Shot"},
+                ["WARLOCK"] = {"Create Soulstone (Major)"},
+                ["SHAMANHealer"] = {"Spirit Link"}
             },
             ["GroupClassCooldown"] = "",
             ["CastWhen"] = "Mouse Up", -- Mouse Up, Mouse Down

@@ -409,6 +409,7 @@ function CreateTab_Options()
 
     CreateTab_Options_Casting(tabPanel)
     CreateTab_Options_SpellsTooltip(tabPanel)
+    CreateTab_Options_Cooldown(tabPanel)
     CreateTab_Options_Other(tabPanel)
     CreateTab_Options_Advanced(tabPanel)
     CreateTab_Options_Mods(tabPanel)
@@ -480,6 +481,54 @@ function CreateTab_Options_SpellsTooltip(panel)
         "SpellsTooltip.ShowItemCount")
 end
 
+function CreateTab_Options_Cooldown(panel)
+    local container = panel:CreateTab("Cooldown")
+    local layout = NewLabeledColumnLayout(container, {150, 220, 300}, -20, 10)
+    local factory = NewComponentFactory(container, layout)
+    container.factory = factory
+    layout:column(1)
+    factory:label("Hide Cooldown Frames:")
+    layout:column(2):levelAt(1)
+    factory:checkbox("In Party", {"Hide cooldown at party frames while in party", "Includes your own"},
+        "DisableCooldownFrames.InParty", function() Puppeteer.CheckCooldownPartyFramesEnabled() end)
+    layout:column(3):levelAt(2)
+    factory:checkbox("In Raid", {"Hide cooldown at party frames while in raid"},
+        "DisableCooldownFrames.InRaid", function() Puppeteer.CheckCooldownRaidFramesEnabled() end)
+    local editboxes = {}
+    layout:column(2)
+    factory:dropdown("Cooldown For Class:", {"This is the class that you'll be setting the cooldowsn for"}, 
+        "GroupClassCooldown", {"DRUID", "HUNTER", "PALADIN", "PRIEST", "WARLOCK"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
+    layout:column(1)
+    layout:offset(0, -30)
+    factory:label("At Party/Raid Frame:")
+    layout:column(1):levelAt(1)
+    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 1)
+        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][1] or ""))
+    layout:column(2):levelAt(1)
+    layout:offset(55, 0)
+    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 2)
+        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][2] or ""))
+    layout:column(2)
+    factory:label("General Focus:")
+    layout:offset(-120, -20)
+    for i = 1, 3 do
+        layout:column(1)
+        table.insert(editboxes, factory:editbox("FocusFrameCooldowns", function() Puppeteer.UpdateFocusClassCooldown() end, 1 + (i - 1) * 3)
+            :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.FocusFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][1 + (i - 1) * 3] or ""))
+        layout:column(2):levelAt(1)
+        layout:offset(55, 0)
+        table.insert(editboxes, factory:editbox("FocusFrameCooldowns", function() Puppeteer.UpdateFocusClassCooldown() end, 2 + (i - 1) * 3)
+            :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.FocusFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][2 + (i - 1) * 3] or ""))
+        layout:column(3):levelAt(2)
+        layout:offset(45, 0)
+        table.insert(editboxes, factory:editbox("FocusFrameCooldowns", function() Puppeteer.UpdateFocusClassCooldown() end, 3 + (i - 1) * 3)
+            :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.FocusFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][3 + (i - 1) * 3] or ""))
+    end
+    layout:column(2)
+    factory:dropdown("Cooldown For Role:", {"This is the role that you'll be setting the cooldowsn for based on selected class"}, 
+        "GroupClassCooldown", {"Tank", "Healer"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
+end
+
 function CreateTab_Options_Other(panel)
     local container = panel:CreateTab("Other")
     local layout = NewLabeledColumnLayout(container, {150, 220, 300}, -20, 10)
@@ -522,27 +571,6 @@ function CreateTab_Options_Other(panel)
     factory:checkbox("(TWoW) LFT Auto Role", {"Automatically assign roles when joining LFT groups", 
             "This functionality was tested for 1.18.0 and may break in future updates"}, "LFTAutoRole",
             function() Puppeteer.SetLFTAutoRoleEnabled(PTOptions.LFTAutoRole) end)
-    layout:column(1)
-    factory:label("Hide Cooldown Frames:")
-    layout:column(2):levelAt(1)
-    factory:checkbox("In Party", {"Hide cooldown at party frames while in party", "Includes your own"},
-        "DisableCooldownFrames.InParty", function() Puppeteer.CheckCooldownPartyFramesEnabled() end)
-    layout:column(3):levelAt(2)
-    factory:checkbox("In Raid", {"Hide cooldown at party frames while in raid"},
-        "DisableCooldownFrames.InRaid", function() Puppeteer.CheckCooldownRaidFramesEnabled() end)
-    local editboxes = {}
-    layout:column(1)
-    layout:offset(-55, 0)
-    factory:dropdown("Group CD For:", {"This is the class that you'll be setting the cooldowsn for"}, 
-        "GroupClassCooldown", {"DRUID", "HUNTER", "PALADIN", "PRIEST", "WARLOCK"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
-    layout:column(2):levelAt(1)
-    layout:offset(15, 0)
-    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 1)
-        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown]["1"] or ""))
-    layout:column(3):levelAt(1)
-    layout:offset(50, 0)
-    table.insert(editboxes, factory:editbox("GroupFrameCooldowns", function() Puppeteer.UpdateGroupClassCooldown() end, 2)
-        :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown]["2"] or ""))
 end
 
 function CreateTab_Options_Advanced(panel)
@@ -1304,7 +1332,7 @@ function NewComponentFactory(container, layout)
                 :SetHeight(25):SetWidth(115)
             self:doLayout(editbox)
             editbox:SetScript("OnEnterPressed", function(self)
-                SetOption(optionLoc.."."..Puppeteer.PTOptions.GroupClassCooldown.."."..index, self:GetText())
+                PuppeteerSettings.PTOptions[optionLoc][Puppeteer.PTOptions.GroupClassCooldown][index] = self:GetText()
                 self:ClearFocus()
                 if enterFunc then
                     enterFunc(self)

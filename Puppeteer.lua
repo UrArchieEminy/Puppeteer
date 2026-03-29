@@ -647,6 +647,14 @@ function UpdateGroupClassCooldown()
     end
 end
 
+function UpdateFocusClassCooldown()
+    for _, ui in ipairs(AllUnitFrames) do
+        if ui:IsShown() and ui:GetClass() == PTOptions.GroupClassCooldown and string.find(ui.unit, "focus") then
+            ui:GetTalentAndGenerateFrames()
+        end
+    end
+end
+
 function ToggleFocusUnit(unit)
     if PTUnitProxy.IsUnitUnitType(unit, "focus") then
         if not PTUnitProxy.CustomUnitsSetMap["focus"][unit] then

@@ -60,6 +60,7 @@ gui\component\uf\Arrow.lua
 Puppeteer.lua
 core\SpellsTooltip.lua
 core\EventHandler.lua
+core\Cooldown.lua
 core\UnitTracker.lua
 core\Command.lua
 core\OverrideBindings.lua
