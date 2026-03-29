@@ -4,6 +4,8 @@ local util = PTUtil
 local SplitString = util.SplitString
 local compost = AceLibrary("Compost-2.0")
 
+local allBookSpells = {}
+
 TRACKED_COOLDOWNS = {
     -- PALADIN GENERAL
     ["Hand of Freedom"] = {
@@ -174,34 +176,68 @@ cooldownRegister:SetScript("OnEvent", function()
         local message = arg2
         local sender = arg4
 
-        if string.find(message, "CDShow", 1, true) then -- person who is asked to get cooldowns from
-            local ui = GetUnitFrames("player")[1]
-            local cooldowns = compost:GetTable()
-
-            util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
-
-            for i, spell in ipairs(cooldowns) do
+        if string.find(message, "CDShow;", 1, true) then -- person who is asked to get cooldowns from
+            local spell = SplitString(message, ";")[2]
+            if util.ArrayContains(allBookSpells, spell) then
                 local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
                 local _, guid = UnitExists("player")
 
+                if not TRACKED_COOLDOWNS[spell] then
+                    local _ , _, id = GetSpellName(spell)
+                    local _, _, iconPath = SpellInfo(id)
+                    local remain = start > 0 and duration - (GetTime() - start) or 0
+                    local icon = string.sub(iconPath, 17)
+                    Roids.Print(icon.."     "..spell)
+
+                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain..";"..duration..";"..icon, "GUILD")
+                    return
+                end
                 if start > 0 then
                     local remain = duration - (GetTime() - start)
                     SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
                 end
-                if i == table.getn(cooldowns) then
-                    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
-                end
             end
-            compost:Reclaim(cooldowns)
         end
+            --local cooldowns = compost:GetTable()
+            --util.AppendArrayElements(cooldowns, PuppeteerSettings.DefaultClassTrackedCDs[util.GetClass("player")])
+--
+            --for i, spell in ipairs(cooldowns) do
+            --    local start, duration = GetSpellCooldown(spell, "BOOKTYPE_SPELL")
+            --    local _, guid = UnitExists("player")
+--
+            --    if start > 0 then
+            --        local remain = duration - (GetTime() - start)
+            --        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDInfo;"..guid..";"..spell..";"..remain, "GUILD")
+            --    end
+            --    if i == table.getn(cooldowns) then
+            --        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
+            --    end
+            --end
+            --compost:Reclaim(cooldowns)
+        --end
+        
         if string.find(message, "CDInfo;", 1, true) then -- person who sent the request to know the cooldowns
             local split = SplitString(message, ';')
             local unit = split[2]
             local spell = split[3]
             local remain = tonumber(split[4])
+            if getn(split) > 4 then
+                local duration = tonumber(split[5])
+                local icon = "Interface\\Icons\\"..split[6]
+                --Roids.Print(icon)
+                if not TRACKED_COOLDOWNS[spell] or TRACKED_COOLDOWNS[spell].duration == 0 then
+                    TRACKED_COOLDOWNS[spell] = {["name"] = spell, ["texture"] = icon, ["duration"] = duration}
+                end
+            end
+
             for ui in UnitFrames(unit) do
                 ui.currentCD[spell] = remain
             end
+        end
+
+        if string.find(message, "CDShowEnd;", 1, true) then
+            local _, guid = UnitExists("player")
+            SendAddonMessage("TW_CHAT_MSG_WHISPER<"..sender..">", "CDEnd;"..guid, "GUILD")
         end
         if string.find(message, "CDEnd;", 1, true) then
             local split = SplitString(message, ';')
@@ -214,6 +250,27 @@ cooldownRegister:SetScript("OnEvent", function()
     end
 end)
 
-function getUnitCooldown(name)
-    SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow", "GUILD")
+function getUnitCooldown(name, spells)
+    for i, spell in ipairs(spells) do
+        Roids.Print(allBookSpells[spell])
+        SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShow;"..spell, "GUILD")
+        if i == getn(spells) then
+            SendAddonMessage("TW_CHAT_MSG_WHISPER<"..name..">", "CDShowEnd;", "GUILD")
+        end
+    end
+    PopulateBookSpells()
+end
+
+function PopulateBookSpells()
+    for i = 1, GetNumSpellTabs() do
+        local tabName, _, offset, n = GetSpellTabInfo(i)
+        if tabName ~= "General" and tabName ~= "Companions" and tabName ~= "Mounts" and tabName ~= "Toys" then
+            for i = offset + 1, offset + n do
+                local spell = GetSpellName(i, "BS")
+                if not util.ArrayContains(allBookSpells, spell) then
+                    table.insert(allBookSpells, spell)
+                end
+            end
+        end
+    end
 end

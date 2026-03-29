@@ -255,6 +255,8 @@ function OnAddonLoaded()
     if util.IsSuperWowPresent() then
         PTUnit.UpdateGuidCaches()
 
+        PopulateBookSpells()
+
         local customUnitUpdater = CreateFrame("Frame", "PTCustomUnitUpdater")
         local nextUpdate = GetTime() + 0.25
         -- Older versions of SuperWoW had an issue where units that aren't part of normal units wouldn't receive events,

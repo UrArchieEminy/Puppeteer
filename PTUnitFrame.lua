@@ -975,7 +975,7 @@ function PTUnitFrame:GenerateCooldownFrames()
     else
         util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
     end
-
+-- TODO RECICLE FRAMES
     for index, spell in ipairs(cooldowns) do
         if Puppeteer.TRACKED_COOLDOWNS[spell] then
             if self.cooldownFrames[spell] then
@@ -995,6 +995,7 @@ function PTUnitFrame:GenerateCooldownFrames()
                 frame:SetPoint(cooldownProps.AlignmentV..cooldownProps.AlignmentH, offsetX, offsetY)
 
                 local icon = aura.icon
+                icon:SetTexture(Puppeteer.TRACKED_COOLDOWNS[spell].texture)
                 icon:Show()
                 icon:SetAllPoints(frame)
 
@@ -1112,20 +1113,25 @@ function PTUnitFrame:GetTalentAndGenerateFrames()
             self:GenerateCooldownFrames()
         elseif self:GetName() ~= UnitName("player") then
             local _, guid = UnitExists(self.unit)
+
             if UnitInRaid(guid) then -- only update raid frames if in raid, reducing amount of updated frames
-                if (not Puppeteer.PTOptions.DisableCooldownFrames.InRaid and string.find(self.unit, "raid")) or string.find(self.unit, "focus") then
-                    Puppeteer.getUnitCooldown(self:GetName())
+                if not Puppeteer.PTOptions.DisableCooldownFrames.InRaid and self:HasGroupCooldown() and string.find(self.unit, "raid")then
+                    Puppeteer.getUnitCooldown(self:GetName(), self:GetGroupCooldown())
                     self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
                 else
                     self:HideCooldownFrames()
                 end
             else -- unit alone or on party so ignore raid frames
-                if (not Puppeteer.PTOptions.DisableCooldownFrames.InParty and string.find(self.unit, "party")) or string.find(self.unit, "focus") then
-                    Puppeteer.getUnitCooldown(self:GetName())
+                if not Puppeteer.PTOptions.DisableCooldownFrames.InParty and self:HasGroupCooldown() and string.find(self.unit, "party") then
+                    Puppeteer.getUnitCooldown(self:GetName(), self:GetGroupCooldown())
                     self:GenerateCooldownFrames() -- called to pregenerate frames in case some addon interfears with the talent scan
                 else
                     self:HideCooldownFrames()
                 end
+            end
+
+            if self:HasFocusCooldown() and string.find(self.unit, "focus") then
+                Puppeteer.getUnitCooldown(self:GetName(), self:GetFocusCooldown())
             end
         else
             self:HideCooldownFrames()
