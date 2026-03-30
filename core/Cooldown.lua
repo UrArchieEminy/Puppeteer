@@ -252,7 +252,11 @@ function getUnitCooldown(name, spells)
     end
 end
 
+
 function PopulateBookSpells()
+    if getn(allBookSpells) > 0 then
+        return
+    end
     for i = 1, GetNumSpellTabs() do
         local tabName, _, offset, n = GetSpellTabInfo(i)
         if tabName ~= "General" and tabName ~= "Companions" and tabName ~= "Mounts" and tabName ~= "Toys" then

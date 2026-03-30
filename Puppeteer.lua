@@ -393,7 +393,6 @@ function OnAddonLoaded()
 
     initUnitFrames()
     StartUnitTracker()
-    PopulateBookSpells()
 
     PuppeteerLib:RegisterEvent("Banzai_UnitGainedAggro", function(unit)
         if PTGuidRoster then

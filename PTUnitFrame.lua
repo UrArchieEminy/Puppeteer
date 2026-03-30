@@ -1043,6 +1043,7 @@ function PTUnitFrame:HideCooldownFrames()
 end
 
 function PTUnitFrame:GetPlayerCooldowns()
+    Puppeteer.PopulateBookSpells()
     local cooldowns = compost:GetTable()
 
     if string.find(self.unit, "focus") then
@@ -1050,7 +1051,7 @@ function PTUnitFrame:GetPlayerCooldowns()
     else
         util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
     end
-
+    
     for _, spell in ipairs(cooldowns) do
         if Puppeteer.HasSpell(spell) then
             local start, duration = GetSpellCooldown(spell)
