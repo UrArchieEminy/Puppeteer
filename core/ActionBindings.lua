@@ -143,6 +143,13 @@ RegisterActionBind({
         PromoteFocus(unit)
     end
 })
+RegisterActionBind({
+    Name = "Trade",
+    Description = "Open trade window with unit",
+    Script = function(unit, unitFrame)
+        InitiateTrade(unit)
+    end
+})
 --[[
 RegisterActionBind({
     Name = "Demote Focus",
