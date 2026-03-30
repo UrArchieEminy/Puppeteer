@@ -68,7 +68,7 @@ PTUnitFrame.fakeStats = {} -- Used for displaying a fake party/raid
 function PTUnitFrame:New(unit, isCustomUnit)
     local obj = setmetatable({unit = unit, isCustomUnit = isCustomUnit, auraIconPool = {}, auraButtonPool = {}, 
         auraButtons = {}, auraIcons = {}, fakeStats = PTUnitFrame.GenerateFakeStats(), cooldownFrames = {},
-        currentCD = {}}, self)
+        currentCD = {}, CooldownBlacklist = {}}, self)
     return obj
 end
 
@@ -972,17 +972,11 @@ function PTUnitFrame:GenerateCooldownFrames()
         util.AppendArrayElements(cooldowns, self:GetGroupCooldown())
     end
 
-    for _, spell in ipairs(self.CooldownBlacklist) do
-        Roids.Print(util.ArrayContains(cooldowns, spell))
-        util.RemoveElement(cooldowns, spell)
-        Roids.Print(util.ArrayContains(cooldowns, spell))
-    end
 
     local c = compost:GetTable()
 
     for index, spell in ipairs(cooldowns) do
-        if Puppeteer.TRACKED_COOLDOWNS[spell] and not util.ArrayContains(self.CooldownBlacklist, spell) then
-            Roids.Print(spell)
+        if Puppeteer.TRACKED_COOLDOWNS[spell] then
             local aura = util.GetTableSize(self.cooldownFrames) > 0 and util.RemoveFromTable(self.cooldownFrames, 1) or nil
             local frame = aura and aura.frame or CreateFrame("Frame", nil, self.healthBar)
             frame.unitFrame = self
@@ -1938,7 +1932,7 @@ end
 function PTUnitFrame:GetGroupCooldown()
     local cds = {}
     for _, spell in ipairs(Puppeteer.PTOptions.GroupFrameCooldowns[self:GetClass()]) do
-        if spell ~= "" then
+        if spell ~= "" and not util.ArrayContains(self.CooldownBlacklist, spell) then
             table.insert(cds, spell)
         end
     end
@@ -1948,7 +1942,7 @@ end
 function PTUnitFrame:GetFocusCooldown()
     local cds = {}
     for _, spell in ipairs(Puppeteer.PTOptions.FocusFrameCooldowns[self:GetClass()]) do
-        if spell ~= "" then
+        if spell ~= "" and not util.ArrayContains(self.CooldownBlacklist, spell) then
             table.insert(cds, spell)
         end
     end

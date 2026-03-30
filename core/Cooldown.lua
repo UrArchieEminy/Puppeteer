@@ -206,7 +206,7 @@ cooldownRegister:SetScript("OnEvent", function()
             if getn(split) > 4 then
                 local duration = tonumber(split[5])
                 local icon = "Interface\\Icons\\"..split[6]
-                --Roids.Print(icon)
+
                 if not TRACKED_COOLDOWNS[spell] or TRACKED_COOLDOWNS[spell].duration == 0 then
                     TRACKED_COOLDOWNS[spell] = {["name"] = spell, ["texture"] = icon, ["duration"] = duration}
                 end

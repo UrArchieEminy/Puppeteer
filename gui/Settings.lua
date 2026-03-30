@@ -497,7 +497,7 @@ function CreateTab_Options_Cooldown(panel)
     local editboxes = {}
     layout:column(2)
     factory:dropdown("Cooldown For Class:", {"This is the class that you'll be setting the cooldowsn for"}, 
-        "GroupClassCooldown", {"DRUID", "HUNTER", "PALADIN", "PRIEST", "WARLOCK"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
+        "GroupClassCooldown", {"DRUID", "HUNTER", "PALADIN", "PRIEST", "WARLOCK"}, function() SetEditBoxText(editboxes, 2) end):SetWidth(75)
     layout:column(1)
     layout:offset(0, -30)
     factory:label("At Party/Raid Frame:")
@@ -524,9 +524,6 @@ function CreateTab_Options_Cooldown(panel)
         table.insert(editboxes, factory:editbox("FocusFrameCooldowns", function() Puppeteer.UpdateFocusClassCooldown() end, 3 + (i - 1) * 3)
             :SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.FocusFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][3 + (i - 1) * 3] or ""))
     end
-    layout:column(2)
-    factory:dropdown("Cooldown For Role:", {"This is the role that you'll be setting the cooldowsn for based on selected class"}, 
-        "GroupClassCooldown", {"Tank", "Healer"}, function() SetEditBoxText(editboxes) end):SetWidth(75)
 end
 
 function CreateTab_Options_Other(panel)
@@ -1408,8 +1405,12 @@ function CreateLabel(parent, text)
     return PTGuiLib.GetText(parent, text)
 end
 
-function SetEditBoxText(table)
+function SetEditBoxText(table, separation)
     for i, box in ipairs(table) do
-        box:SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][tostring(i)] or "")
+        if i > separation then
+            box:SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.FocusFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][i - separation] or "")
+        else
+            box:SetText(Puppeteer.PTOptions.GroupClassCooldown ~= "" and Puppeteer.PTOptions.GroupFrameCooldowns[Puppeteer.PTOptions.GroupClassCooldown][i] or "")
+        end
     end
 end
