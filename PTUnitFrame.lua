@@ -790,7 +790,12 @@ end
 
 
 function PTUnitFrame:HandleCooldown(caster, spell)
-    if self.cooldownFrames[spell] then
+    if spell == "Soulstone Resurrection" and self.cooldownFrames["Create Soulstone"] then
+        CooldownFrame_SetTimer(self.cooldownFrames["Create Soulstone"].duration, GetTime(), self.cooldownFrames["Create Soulstone"].cooldown, 1)
+    elseif self.cooldownFrames[spell] then
+        if self.cooldownFrames[spell].duration == 0 then
+            self:GetTalentAndGenerateFrames()
+        end
         CooldownFrame_SetTimer(self.cooldownFrames[spell].duration, GetTime(), self.cooldownFrames[spell].cooldown, 1)
     end
 end

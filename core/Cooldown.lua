@@ -154,8 +154,8 @@ TRACKED_COOLDOWNS = {
         duration = 20,
     },
     -- WARLOCK
-    ["Create Soulstone (Major)"] = {
-        name = "Create Soulstone (Major)",
+    ["Create Soulstone"] = {
+        name = "Create Soulstone",
         texture = "Interface\\Icons\\spell_shadow_soulgem",
         duration = 30 * 60
     },
