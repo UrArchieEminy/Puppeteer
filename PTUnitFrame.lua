@@ -1059,7 +1059,7 @@ function PTUnitFrame:GetPlayerCooldowns()
     
     for _, spell in ipairs(cooldowns) do
         if Puppeteer.HasSpell(spell) then
-            local start, duration = GetSpellCooldown(spell)
+            local start, duration = GetSpellCooldown(spell, "BS")
 
             if not Puppeteer.TRACKED_COOLDOWNS[spell] or Puppeteer.TRACKED_COOLDOWNS[spell].duration == 0 then
                 local _ , _, id = GetSpellName(spell)

@@ -156,20 +156,15 @@ function SetDefaults()
             },
             ["FocusFrameCooldowns"] = {
                 ["PALADIN"] = {"Hand of Freedom", "Hand of Protection", "Divine Shield", "Hammer of Justice", "Divine Intervention", "Lay on Hands"},
-                ["PALADINHealer"] = {"Holy Shock"},
-                ["PALADINTank"] = {"Bulwark of the Righteous"},
                 ["WARRIOR"] = {"Last Stand", "Shield Wall", "Death Wish", "Mocking Blow", "Challenging Shout"},
-                ["WARRIORTank"] = {"Taunt"},
                 ["PRIEST"] = {"Power Word: Shield", "Fear Ward"},
                 ["PRIESTHealer"] = {"Ascendance"},
                 ["DRUID"] = {"Rebirth", "Innervate", "Tranquility"},
-                ["DRUIDHealer"] = {"Swiftmend"},
-                ["DRUIDTank"] = {"BarkSkin(Feral)", "Challenging Roar", "Frenzied Regeneration", "Enrage", "Feral Charge"},
                 ["HUNTER"] = {"Tranquilizing Shot"},
-                ["WARLOCK"] = {"Create Soulstone (Major)"},
-                ["SHAMANHealer"] = {"Spirit Link"}
+                ["WARLOCK"] = {"Create Soulstone (Major)"}
             },
             ["GroupClassCooldown"] = "",
+            ["BlacklistedBuffs"] = {},
             ["CastWhen"] = "Mouse Up", -- Mouse Up, Mouse Down
             ["CastWhenKey"] = "Key Up", -- Key Up, Key Down
             ["AutoResurrect"] = util.ResurrectionSpells[util.GetClass("player")] ~= nil,
@@ -536,6 +531,18 @@ function BakeTrackedAuras()
     end
     util.AppendArrayElements(trackedBuffsArray, DefaultTrackedHealingBuffs)
     util.AppendArrayElements(trackedBuffsArray, DefaultTrackedBuffs)
+    
+    if PTOptions then
+        local blacklist = util.CloneArray(PTOptions.BlacklistedBuffs)
+        local translated_blacklist = blacklist
+
+        for _, buff in ipairs(translated_blacklist) do
+            if util.ArrayContains(trackedBuffsArray, buff) then
+                util.RemoveElement(trackedBuffsArray, buff)
+            end
+        end
+    end
+
     util.ToSet(trackedBuffsArray, true, TrackedBuffs)
 
     local trackedDebuffsArray = {}

@@ -397,6 +397,18 @@ function CloneTable(table, deep)
     return clone
 end
 
+function CloneArray(array, deep)
+    local clone = {}
+    for i, v in ipairs(array) do
+        if deep and type(v) == "array" then
+            table.insert(clone, CloneArray(v, true))
+        else
+            table.insert(clone, v)
+        end
+    end
+    return clone
+end
+
 function ApplyTableDiffs(t, overrides)
     for k, v in pairs(overrides) do
         if t[k] ~= nil then

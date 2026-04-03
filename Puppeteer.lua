@@ -377,6 +377,8 @@ function OnAddonLoaded()
     
     SetLFTAutoRoleEnabled(PTOptions.LFTAutoRole)
 
+    PuppeteerSettings.BakeTrackedAuras()
+
     CheckCooldownRaidFramesEnabled()
 
     SetOutOfRangeArrowEnabled(PTOptions.OutOfRangeArrow)

@@ -89,9 +89,47 @@ SlashCmdList["PUPPETEER"] = function(args)
         DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt hide", 0, 0.8, 0).." -- Hides the UI")
         DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt roles", 0, 0.8, 0).." -- Broadcast the roles you have assigned to chat")
         DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt silent", 0, 0.8, 0).." -- Turns off/on message when addon loads")
+        DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt blacklist", 0, 0.8, 0).." -- Get info about how to blacklist buffs, disabling them from appearing on frames")
     elseif args == "importhm" then
         Puppeteer.ImportHealersMateSettings()
         Puppeteer.Info("Imported HealersMate settings")
+    elseif string.find(args, "blacklist") then
+        local blacklist = Puppeteer.PTOptions.BlacklistedBuffs
+        local command = PTUtil.SplitString(args, " ")[2]
+        local buff = command and string.gsub(PTUtil.SplitString(args, command.." ")[2] or "", "^%s*(.-)%s*$", "%1") or nil
+
+        if command == "add" then
+            if not PTUtil.ArrayContains(blacklist, buff) then
+                DEFAULT_CHAT_FRAME:AddMessage(buff.." was added to the blacklist\nChanges may only take effect after reload")
+                table.insert(blacklist, buff)
+                PuppeteerSettings.BakeTrackedAuras()
+            else
+                DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("Blacklist already contains"..buff, 1, 0, 0))
+            end
+        elseif command == "remove" then
+            if PTUtil.ArrayContains(blacklist, buff) then
+                DEFAULT_CHAT_FRAME:AddMessage(buff.." was removed from the blacklist\nChanges may only take effect after reload")
+                PTUtil.RemoveElement(blacklist, buff)
+                PuppeteerSettings.BakeTrackedAuras()
+            else
+                DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("Blacklist doesn't contain"..buff, 1, 0, 0))
+            end
+        elseif command == "list" then
+            local buffList = "["
+            for _, buff in ipairs(blacklist) do
+                buffList = buffList..buff..", "
+            end
+            buffList = buffList.."]"
+            DEFAULT_CHAT_FRAME:AddMessage(buffList)
+        elseif command == "clear" then
+            DEFAULT_CHAT_FRAME:AddMessage("Blacklist Cleared")
+            Puppeteer.PTOptions.BlacklistedBuffs = {}
+        else
+            DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt blacklist add [buff]", 0, 0.8, 0).." -- Adds a buff to the blacklist, disabling the display of it")
+            DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt blacklist remove [buff]", 0, 0.8, 0).." -- Removes a buff from the blacklist, enabling the display of it")
+            DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt blacklist list", 0, 0.8, 0).." -- Display the name of all current blacklisted buffs")
+            DEFAULT_CHAT_FRAME:AddMessage(PTUtil.Colorize("/pt blacklist clear", 0, 0.8, 0).." -- Clears the list of disabled buffs")
+        end
     elseif args == "" then
         PTSettingsGui.TabFrame:Show()
     else

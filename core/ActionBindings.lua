@@ -154,6 +154,7 @@ RegisterActionBind({
     Name = "Update Frame",
     Description = "Update frame in case of cooldowns not tracking when they should",
     Script = function(unit, unitFrame)
+        unitFrame.registerIsDirty = true
         unitFrame:GetTalentAndGenerateFrames()
     end
 })
